@@ -18,10 +18,17 @@ on the Vultr VM in Phase 2; nothing here touches a wallet or the network.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from itertools import product
+from itertools import combinations, permutations, product
 from typing import Dict, Iterator, List
 
 from .hints import HintProfile, HintError
+
+
+# Partial leet is enumerated only for words with this many swappable letters or fewer.
+MAX_PARTIAL_LEET = 4
+
+# Most base words joined into one candidate ("Sara_Max").
+MAX_WORDS_JOINED = 2
 
 
 class CompileError(ValueError):
@@ -34,20 +41,40 @@ def _leet(word: str, leet_map: Dict[str, str]) -> str:
     return "".join(leet_map.get(c.lower(), c) for c in word)
 
 
+def _leet_subsets(word: str, leet_map: Dict[str, str]) -> List[str]:
+    """Leet forms of one word, original first, full substitution second, then
+    partial substitutions. People often swap only some letters ("Liverp00l"
+    keeps the i). Partial forms are only enumerated when the word has at most
+    MAX_PARTIAL_LEET distinct swappable letters, to keep the space human sized."""
+    chars = []
+    for c in word.lower():
+        if c in leet_map and c not in chars:
+            chars.append(c)
+    out = [word, _leet(word, leet_map)]
+    if 1 < len(chars) <= MAX_PARTIAL_LEET:
+        for r in range(1, len(chars)):
+            for subset in combinations(chars, r):
+                out.append(_leet(word, {c: leet_map[c] for c in subset}))
+    seen, uniq = set(), []
+    for v in out:
+        if v not in seen:
+            seen.add(v)
+            uniq.append(v)
+    return uniq
+
+
 def word_variants(word: str, *, case_variants: bool, use_leet: bool,
                   leet_map: Dict[str, str]) -> List[str]:
     """Bounded, priority-ordered variants of a single base word.
 
     Case variants are the three forms people actually use (lower, Capitalised,
-    UPPER), most-likely first. Leet is applied as a single all-substitutions
-    pass per case form, not per-character combinatorially, to keep the space
-    human-sized. Order matters: earlier = tried earlier.
+    UPPER), most-likely first. Leet adds the full substitution and, for short
+    words, the partial ones (see _leet_subsets). Earlier = tried earlier.
     """
     word = word.strip()
     if not word:
         return []
 
-    forms: List[str] = []
     if case_variants:
         forms = [word.capitalize(), word.lower(), word.upper()]
     else:
@@ -56,7 +83,7 @@ def word_variants(word: str, *, case_variants: bool, use_leet: bool,
     out: List[str] = []
     seen = set()
     for f in forms:
-        for v in (f, _leet(f, leet_map)) if use_leet else (f,):
+        for v in (_leet_subsets(f, leet_map) if use_leet else [f]):
             if v not in seen:
                 seen.add(v)
                 out.append(v)
@@ -147,7 +174,9 @@ def _old_password_variants(pw: str, prof: HintProfile) -> List[str]:
         base = [pw]
     out: List[str] = []
     seen = set()
-    tails = [""] + list(prof.symbols) + list(prof.years) + list(prof.numbers)
+    nums = [""] + list(prof.years) + [n for n in prof.numbers if n not in prof.years]
+    syms = [""] + list(prof.symbols)
+    tails = [n + sym for n in nums for sym in syms]   # "", "!", "2011", "2011!!", ...
     for b in base:
         for t in tails:
             v = b + t
@@ -170,14 +199,28 @@ def compile_profile(profile: HintProfile) -> CompiledPlan:
     # Build positions: [ word ] [ separator? ] [ number? ] [ symbol? ]
     positions: List[Position] = []
 
+    per_word: List[List[str]] = []
+    for w in prof.words:
+        per_word.append(word_variants(w, case_variants=prof.case_variants,
+                                      use_leet=prof.use_leet, leet_map=prof.leet_map))
+
     word_alts: List[str] = []
     seen = set()
-    for w in prof.words:
-        for v in word_variants(w, case_variants=prof.case_variants,
-                               use_leet=prof.use_leet, leet_map=prof.leet_map):
-            if v not in seen:
-                seen.add(v)
-                word_alts.append(v)
+
+    def add(v: str) -> None:
+        if v not in seen:
+            seen.add(v)
+            word_alts.append(v)
+
+    for variants in per_word:          # single words first: most likely
+        for v in variants:
+            add(v)
+    if MAX_WORDS_JOINED >= 2 and len(per_word) >= 2:
+        joiners = [""] + list(prof.separators)
+        for i, j in permutations(range(len(per_word)), 2):
+            for a, b in product(per_word[i], per_word[j]):
+                for sep in joiners:
+                    add(a + sep + b)
     if word_alts:
         positions.append(Position("word", word_alts))
 

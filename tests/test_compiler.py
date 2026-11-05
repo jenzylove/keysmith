@@ -70,6 +70,23 @@ class TestCompile(unittest.TestCase):
         lines = [l for l in text.splitlines() if l]
         self.assertEqual(len(lines), len(set(lines)))
 
+    def test_two_words_joined_with_separator(self):
+        p = HintProfile(words=["Sara", "Max"], numbers=["7"], separators=["_"],
+                        case_variants=False)
+        cands = set(compile_profile(p).iter_candidates())
+        self.assertIn("Sara_Max7", cands)
+        self.assertIn("MaxSara", cands)
+
+    def test_partial_leet_from_user_map(self):
+        p = HintProfile(words=["Liverpool"], years=["1892"], separators=["."],
+                        use_leet=True, leet_map={"s": "$", "o": "0"}, case_variants=False)
+        self.assertIn("Liverp00l.1892", set(compile_profile(p).iter_candidates()))
+
+    def test_old_password_gets_year_and_symbol(self):
+        p = HintProfile(old_passwords=["summerbreeze"], years=["2011"], symbols=["!!"],
+                        case_variants=False)
+        self.assertIn("summerbreeze2011!!", set(compile_profile(p).iter_candidates()))
+
 
 if __name__ == "__main__":
     unittest.main()

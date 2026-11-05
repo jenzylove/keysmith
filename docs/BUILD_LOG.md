@@ -51,3 +51,16 @@
     reasoning model; max_tokens must leave room for reasoning tokens or content is empty.
   NEXT: S1 live round-trip (model writes tokenlists from 5 hint sets, validator) + S3
   (create -> seal -> destroy job VM, time it). Keys live in ~/keysmith/.env (gitignored).
+
+- 2026-11-05 (session 4, ~21:30 UTC):
+  - S3 DONE (docs/spikes/sealed-vm.md): Vultr VM create to SSH 71 s, gVisor install 20 s,
+    DELETE 204 and gone in 2 s. Containment proven: runsc --network none -> unreachable,
+    wallet :ro, agent box has no wallet. Found and fixed: output-only nftables lock lets
+    Docker bridge traffic out; forward chain drop added. Spike VM destroyed, 0 instances.
+  - S1 DONE (docs/spikes/inference.md): deepseek-v4.1-flash-1017 and glm-5.3-flash both
+    recover 5/5 after compiler fixes (two-word joins, user leet_map + partial leet,
+    old password + year + symbol). Poisoned note ignored by all models.
+  - pyproject.toml added (pytest pythonpath=src). 35 tests pass.
+  NEXT: Phase 2 integration: snapshot image (docker+gVisor+btcrecover), job orchestrator
+  (create from snapshot -> lock -> push -> run -> pull -> delete), S2 live speeds on VM,
+  interview agent endpoint. Then Phase 3 proof set.
