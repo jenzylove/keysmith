@@ -19,15 +19,16 @@ password list in over SSH and pulls progress and the result out over the same se
 
 ## Python package layout (`src/keysmith/`)
 
-| Module | Owner | Purpose |
+| Module | Status | Purpose |
 |---|---|---|
 | hints.py, compiler.py, estimator.py, receipt.py | done | pure core, tested |
-| llm.py | backend agent | Vultr Inference client (OpenAI compatible, `https://api.vultrinference.com/v1`), model `deepseek-v4.1-flash-1017`, fallback `glm-5.3-flash`, `max_tokens` 4000 |
-| profile_agent.py | backend agent | notes + answers -> HintProfile JSON (system prompt from scripts/s1_live.py, unknown fields dropped) |
-| jobs.py | backend agent | in-memory job store + event bus (asyncio queues), JSON snapshot of finished jobs to `data/jobs/` (never the wallet bytes or the found password) |
-| api.py | backend agent | FastAPI app (routes below), serves `web/dist` at `/` with SPA fallback |
-| runner.py | **lead (me)** | `Runner` protocol + `SealedVmRunner` (Vultr API + SSH) |
-| demo.py | backend agent | loads demo wallets from `data/demo/` (manifest.json + files) |
+| llm.py | **done** | Vultr Inference client (OpenAI compatible, `https://api.vultrinference.com/v1`), model `deepseek-v4.1-flash-1017`, fallback `glm-5.3-flash`, `max_tokens` 4000, fallback on empty/error |
+| profile_agent.py | **done** | notes + answers -> HintProfile JSON (system prompt from scripts/s1_live.py, unknown fields dropped — the injection gate) |
+| jobs.py | **done** | in-memory job store + asyncio event bus, redacted replay history, JSON snapshot of finished jobs to `data/jobs/` (never the wallet bytes or the found password) |
+| api.py | **done** | FastAPI app (routes below), serves `web/dist` at `/` with SPA fallback, per-IP rate limit, 3-job concurrency cap |
+| runner.py | **done** | `Runner` protocol + `NullRunner` (default, honest) + `SealedVmRunner` (Vultr API + SSH, S3 flow). Not yet live-exercised end to end (no keys in the build session). |
+| demo.py | **done** | loads demo wallets from `data/demo/` (manifest.json + files); rejects any manifest carrying a password |
+| web/dist | **done** | hand-authored SPA (no build step); full flow, dark + light, verified in a real browser |
 
 ## Runner protocol (lead implements; backend agent codes against it)
 

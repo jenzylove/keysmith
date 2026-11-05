@@ -7,11 +7,17 @@ wallets/
 __pycache__/
 .venv/
 node_modules/
-dist/
 build/
 .pytest_cache/
 
-# demo wallet files: only the manifest is committed
+# Python build output (NOT web/dist, which is the hand-authored app and IS committed)
+/dist/
+*.egg-info/
+
+# demo wallet files: only the manifest is committed (vaults are regenerated)
 data/demo/*
 !data/demo/manifest.json
 !scripts/wallets/
+
+# finished-job receipts are written at runtime
+data/jobs/

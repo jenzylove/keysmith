@@ -1,0 +1,33 @@
+# systemd unit for the Keysmith backend on the control VM.
+# Place at /etc/systemd/system/keysmith.service, then:
+#   systemctl daemon-reload && systemctl enable --now keysmith
+#
+# Secrets go in /etc/keysmith.env (chmod 600), never in the repo:
+#   VULTR_API_KEY=...
+#   VULTR_INFERENCE_KEY=...
+#   KEYSMITH_SNAPSHOT_ID=...
+#   KEYSMITH_SSHKEY_ID=...
+#   KEYSMITH_SSH_KEY=/root/keysmith-launch/ssh/id_ed25519
+#   KEYSMITH_DATA_DIR=/var/lib/keysmith
+#   KEYSMITH_WEB_DIST=/opt/keysmith/web/dist
+
+[Unit]
+Description=Keysmith backend (FastAPI + sealed-VM runner)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/keysmith
+EnvironmentFile=/etc/keysmith.env
+ExecStart=/opt/keysmith/.venv/bin/uvicorn keysmith.api:app --host 127.0.0.1 --port 8000
+Environment=PYTHONPATH=/opt/keysmith/src
+Restart=on-failure
+RestartSec=3
+# Harden: the backend never needs to write outside its data dir.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/keysmith
+
+[Install]
+WantedBy=multi-user.target

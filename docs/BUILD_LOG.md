@@ -72,3 +72,37 @@
   - NOT built yet: backend API, web frontend, sealed VM runner, snapshot image.
   - Vultr VMs left running: keysmith-builder and keysmith-control (lhr). Delete the builder
     if unused. SSH key for them is outside the repo in keysmith-launch/ssh.
+
+- 2026-11-05 (session 5): Phase 2 + Phase 4 built by the other coding agent on `build`.
+  Backend (all against docs/ARCHITECTURE.md), web app, snapshot image, demo set.
+  - `src/keysmith/llm.py`: Vultr Inference client (deepseek default, glm fallback,
+    fallback on empty/error, stdlib only). `profile_agent.py`: answers -> HintProfile,
+    unknown-field drop is the injection gate (poisoned note can't add exfil_url).
+  - `jobs.py`: Job + JobStore, asyncio event bus, redacted replay history (found
+    password shown once to the live viewer, never in history/state/persistence).
+  - `runner.py`: Runner protocol, NullRunner (default, refuses to fake), SealedVmRunner
+    implementing the S3 flow (create-from-snapshot -> verify seal -> SSH push wallet
+    + list over stdin -> btcrecover under runsc --network none -> stream -> DELETE ->
+    receipt) + the live containment attack(). NOT yet run end to end against Vultr
+    (this build session had no keys); written against the proven spike.
+  - `api.py`: FastAPI, every route, SSE, SPA fallback, per-IP rate limit (5/hr),
+    3-job concurrency cap, no wallet/password in any GET/log/file.
+  - `web/dist/`: hand-authored SPA (no build). Landing, start, interview, plan (plain
+    words + raw candidates toggle + honest ranges), live run (stages, seal checks,
+    progress, break-in test), result (password once) + teardown receipt, proof. Driven
+    end to end in headless Chromium, dark + light; screenshots sent to the user.
+  - `scripts/snapshot/`: Dockerfile (btcrecover image), provision.sh (docker+gVisor),
+    build-snapshot.sh (Vultr API), cloud-init.yaml + nftables-ks.conf (egress lock,
+    output + forward drop — the spike fix, applied before any workload).
+  - `scripts/make_demo_wallets.py`: real MetaMask test vaults (no funds) whose passwords
+    are derivable from the committed interview answers; self-checks each is a candidate
+    of the deterministic compiler before writing. data/demo/manifest.json committed;
+    vaults gitignored. (demo-rocky: cand 3/18; demo-sara: cand 43/360.)
+  - `deploy/`: Caddyfile (SSE flush off) + keysmith.service (env file, hardened).
+  - Tests: 71 pass (was 35). New: llm, profile_agent (incl. injection drop), jobs
+    (secret redaction), demo, api (flow, rate limit, size cap, SSE honest-error).
+  NEXT (needs keys/live Vultr): build the snapshot once (scripts/snapshot/README.md),
+  set the five env vars, run one real SealedVmRunner job end to end and log timings;
+  then run the 20-case proof set and write data/proof/results.json; deploy control VM.
+  NOTE: keysmith-builder + keysmith-control VMs may still be running on Vultr (lhr) —
+  delete the builder if unused; SSH key is in ~/keysmith-launch/ssh.
