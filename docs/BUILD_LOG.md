@@ -21,3 +21,10 @@
 - Blocked (not started): S1 inference + S3 sealed VM need Vultr keys; account/credit
   activation is pending on a widespread lablab gift-code issue (user has a support
   ticket open).
+- 2026-11-05: Vultr $200 credit applied (gift code AGENTRUSHSLC2026). Both keys
+  added to environment secrets (VULTR_INFERENCE_KEY, VULTR_API_KEY) — require a
+  fresh session to load.
+  NEXT SESSION: `git checkout build`; confirm both keys with `printenv`; then run
+  S1 (inference: list models at api.vultrinference.com/v1, compile 5 hint sets,
+  validate) and S3 (create -> seal -> destroy a Vultr job VM under 3 min). Phase 1
+  core logic (hints/compiler/estimator/receipt) is done and tested on this branch.
