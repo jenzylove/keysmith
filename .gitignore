@@ -1,0 +1,12 @@
+.env*
+!.env.example
+*.dat
+wallets/
+*.key
+*.pem
+__pycache__/
+.venv/
+node_modules/
+dist/
+build/
+.pytest_cache/
