@@ -10,3 +10,8 @@ node_modules/
 dist/
 build/
 .pytest_cache/
+
+# demo wallet files: only the manifest is committed
+data/demo/*
+!data/demo/manifest.json
+!scripts/wallets/

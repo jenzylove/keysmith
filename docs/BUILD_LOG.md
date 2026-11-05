@@ -64,3 +64,11 @@
   NEXT: Phase 2 integration: snapshot image (docker+gVisor+btcrecover), job orchestrator
   (create from snapshot -> lock -> push -> run -> pull -> delete), S2 live speeds on VM,
   interview agent endpoint. Then Phase 3 proof set.
+
+- 2026-11-05 (session 4, ~22:30 UTC): handed off to the user's other coding agents.
+  - Added docs/ARCHITECTURE.md (API, SSE events, runner protocol, data dirs).
+  - data/proof/cases.json: 20 case answer key written blind (15 derivable, 5 honest misses).
+  - scripts/wallets/: test wallet generators (MetaMask, Blockchain v3, BIP39), each verified.
+  - NOT built yet: backend API, web frontend, sealed VM runner, snapshot image.
+  - Vultr VMs left running: keysmith-builder and keysmith-control (lhr). Delete the builder
+    if unused. SSH key for them is outside the repo in keysmith-launch/ssh.
