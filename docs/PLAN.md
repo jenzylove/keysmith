@@ -1,4 +1,4 @@
-# Dormant: build plan
+# Keysmith: build plan
 
 Deadline Nov 8 2026, 22:00 UTC. Stack: Python (FastAPI) backend, btcrecover, Docker + gVisor, a light frontend served by the backend. All on Vultr.
 
