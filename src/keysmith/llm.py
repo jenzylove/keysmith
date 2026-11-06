@@ -165,6 +165,10 @@ class VultrInference:
             raise LLMError(f"{model} HTTP {exc.code}: {detail}") from exc
         except urllib.error.URLError as exc:  # pragma: no cover - network
             raise LLMError(f"{model} network error: {exc.reason}") from exc
+        except (ConnectionError, TimeoutError, OSError) as exc:  # pragma: no cover - network
+            # e.g. ConnectionResetError mid-read; treat as a failed attempt so the
+            # caller can fall back to the other model instead of crashing.
+            raise LLMError(f"{model} connection error: {exc}") from exc
         latency_ms = int((time.time() - start) * 1000)
         try:
             content = payload["choices"][0]["message"].get("content") or ""

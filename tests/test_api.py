@@ -124,12 +124,14 @@ class TestJobFlow(unittest.TestCase):
 
 
 class TestProof(unittest.TestCase):
-    def test_proof_not_run(self):
+    def test_proof_endpoint(self):
         client, _ = make_client()
         r = client.get("/api/proof")
         self.assertEqual(r.status_code, 200)
-        # results.json is absent in the repo until a real run; honest status.
-        self.assertIn("status", r.json())
+        body = r.json()
+        # Either the honest "not run" status, or real results (summary + cases).
+        self.assertTrue("status" in body or ("summary" in body and "cases" in body),
+                        f"unexpected proof payload: {body}")
 
 
 if __name__ == "__main__":

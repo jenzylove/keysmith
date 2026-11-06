@@ -126,3 +126,17 @@
     scripts/snapshot/build-snapshot.sh provision <builder_ip> <ssh_key>
     scripts/snapshot/build-snapshot.sh snapshot <builder_vm_id>   # -> KEYSMITH_SNAPSHOT_ID
     then set the five KEYSMITH_* / VULTR_* env vars and run one job end to end.
+
+- 2026-11-06 (session 6 cont.): proof set run live (agent side, no VM needed — the
+  compiler's ordered list gives exact rank). scripts/run_proof.py -> data/proof/results.json.
+  Result (blind; compiler only ever tuned on the separate 5-case dev set):
+  AGENT 10/20 vs plain defaults 0/20. Of the 15 intended-derivable: 10 recovered;
+  5/5 honest misses correctly missed (NO false positives — the tool never claims a
+  password it shouldn't). Publishable derivable-misses: p02 (Bruno@Priya7), p03
+  (Flameng0Thiago2018), p11 (Bitcoin123TA), p12 (Arjun#Kavya108), p15 (kasiakuba13!).
+  Common fix themes: symbol separators (@,#) between joined words; partial leet on a
+  joined word. NOT patched — the proof set stays blind/untuned by design.
+  Also: hardened llm.py to treat connection resets (ConnectionResetError/OSError) as a
+  retryable failed attempt (falls back to the other model) instead of crashing.
+  Added scripts/run_live_job.py (one live sealed recovery) + docs/RUNBOOK.md (steps
+  1-5 for a machine with SSH: snapshot, env, live job, proof, deploy).

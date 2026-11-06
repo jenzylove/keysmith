@@ -1,0 +1,205 @@
+{
+  "summary": "10/20 recovered by agent rules vs 0/20 by plain defaults (same budget). Hints written before any run; misses published with the fix.",
+  "cases": [
+    {
+      "id": "p01",
+      "wallet_type": "metamask",
+      "found": true,
+      "guesses": 1,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "First name plus the year he thinks and the exclamation mark."
+    },
+    {
+      "id": "p02",
+      "wallet_type": "metamask",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Two names joined with the at sign and a lucky number at the end."
+    },
+    {
+      "id": "p03",
+      "wallet_type": "metamask",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Team and a name with one partial o to zero swap, then the year."
+    },
+    {
+      "id": "p04",
+      "wallet_type": "metamask",
+      "found": true,
+      "guesses": 19,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Old password with the year changed to 2019 and a bang added."
+    },
+    {
+      "id": "p05",
+      "wallet_type": "metamask",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": false,
+      "note": "The true year 2018 is outside the range he remembers."
+    },
+    {
+      "id": "p06",
+      "wallet_type": "metamask",
+      "found": true,
+      "guesses": 79,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Lowercase sister name, capitalised place, then the two digit number."
+    },
+    {
+      "id": "p07",
+      "wallet_type": "metamask",
+      "found": true,
+      "guesses": 53,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Team with a partial o swap, dog name, wedding year."
+    },
+    {
+      "id": "p08",
+      "wallet_type": "bitcoin_core",
+      "found": true,
+      "guesses": 1,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Wife's name, the year, and two exclamation marks."
+    },
+    {
+      "id": "p09",
+      "wallet_type": "bitcoin_core",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": false,
+      "note": "The final random chunk x9Q appears in no answer."
+    },
+    {
+      "id": "p10",
+      "wallet_type": "bitcoin_core",
+      "found": true,
+      "guesses": 79,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Name and team with only the a to 4 swap and the year."
+    },
+    {
+      "id": "p11",
+      "wallet_type": "bitcoin_core",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Old password with capitalised initials appended."
+    },
+    {
+      "id": "p12",
+      "wallet_type": "bitcoin_core",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Two names joined by a hash then a meaningful number."
+    },
+    {
+      "id": "p13",
+      "wallet_type": "electrum",
+      "found": true,
+      "guesses": 201,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "City, underscore, name, year and a question mark."
+    },
+    {
+      "id": "p14",
+      "wallet_type": "electrum",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": false,
+      "note": "The cat name Mochi is not mentioned anywhere."
+    },
+    {
+      "id": "p15",
+      "wallet_type": "electrum",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Two lowercase names, the number and the symbol."
+    },
+    {
+      "id": "p16",
+      "wallet_type": "electrum",
+      "found": true,
+      "guesses": 3,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Her name with the i to 1 swap and the year."
+    },
+    {
+      "id": "p17",
+      "wallet_type": "blockchain",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": false,
+      "note": "The last two capital letters are random and unmentioned."
+    },
+    {
+      "id": "p18",
+      "wallet_type": "blockchain",
+      "found": true,
+      "guesses": 1,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Name, wallet year, exclamation mark."
+    },
+    {
+      "id": "p19",
+      "wallet_type": "blockchain",
+      "found": true,
+      "guesses": 2,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": true,
+      "note": "Old password with a bang appended."
+    },
+    {
+      "id": "p20",
+      "wallet_type": "blockchain",
+      "found": false,
+      "guesses": null,
+      "baseline_found": false,
+      "baseline_guesses": null,
+      "expected_derivable": false,
+      "note": "He also swapped a to @ in the cat name, which he does not mention."
+    }
+  ]
+}
