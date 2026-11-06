@@ -161,6 +161,7 @@ class SealedVmRunner:
             })
 
             await emit({"type": "stage", "stage": "sealing"})
+            await self._apply_egress_lock(ip, emit)
             checks = await self._verify_seal(ip, emit)
             await emit({"type": "seal", "checks": checks})
 
@@ -362,6 +363,21 @@ class SealedVmRunner:
             raise RunnerError(f"SSH command failed ({rc}): {err_s.strip()[:200]}")
         return rc, out_s, err_s
 
+    async def _apply_egress_lock(self, ip: str, emit: Emit) -> None:
+        """Apply the nftables egress lock (output + forward + input policy drop,
+        the S3-spike fix) to the job VM before any wallet is pushed. The only way
+        in stays the control VM's inbound SSH; the box can open no connection out.
+        nftables is installed on the fly if the image lacks it (net is still open
+        at this point, before the lock lands)."""
+        await self._ssh(
+            ip, "command -v nft >/dev/null 2>&1 || "
+                "(export DEBIAN_FRONTEND=noninteractive; apt-get update -qq && "
+                "apt-get install -y -qq nftables)",
+            check=False, timeout=120,
+        )
+        await self._ssh(ip, "nft -f -", stdin=_EGRESS_LOCK.encode(), check=True)
+        await emit({"type": "log", "line": "egress lock applied (nftables: output+forward+input drop)"})
+
     async def _verify_seal(self, ip: str, emit: Emit) -> List[Dict[str, str]]:
         """Read back the live containment facts from the box. These are observed,
         not asserted: each value comes from a command run on the VM."""
@@ -474,6 +490,30 @@ class SealedVmRunner:
 
 class RunnerError(RuntimeError):
     """A sealed-VM operation failed, with a plain-words message for the user."""
+
+
+# The job-VM egress lock, applied over SSH at seal time. Output AND forward chains
+# drop (the S3-spike fix: an output-only lock leaks Docker-bridge traffic); input
+# keeps inbound SSH so the control VM can still push/pull over its one channel.
+_EGRESS_LOCK = """flush ruleset
+table inet ks {
+  chain output {
+    type filter hook output priority 0; policy drop;
+    oif "lo" accept
+    ct state established,related accept
+  }
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+    ct state established,related accept
+  }
+  chain input {
+    type filter hook input priority 0; policy drop;
+    iif "lo" accept
+    ct state established,related accept
+    tcp dport 22 ct state new accept
+  }
+}
+"""
 
 
 # --- btcrecover output parsing ----------------------------------------------
