@@ -103,7 +103,7 @@ class VmConfig:
     ssh_user: str = "root"
     vcpus: int = 2
     api_base: str = "https://api.vultr.com/v2"
-    boot_timeout_s: int = 240
+    boot_timeout_s: int = 420   # snapshot-restored VMs can stay 'locked' a while
     job_timeout_s: int = 1800
     image: str = "keysmith/btcrecover"   # baked into the snapshot
     remote_job_dir: str = "/job"
@@ -153,7 +153,10 @@ class SealedVmRunner:
         api_delete_status: Optional[str] = None
         try:
             await emit({"type": "stage", "stage": "creating_box"})
-            vm_id, ip = await self._create_and_wait(emit)
+            # Assign vm_id BEFORE the wait, so a boot timeout still destroys it
+            # in the finally block (no leaked VMs).
+            vm_id = await self._create_instance()
+            ip = await self._wait_for_ssh(vm_id, emit)
             job._vm_ip = ip  # transient, never serialized
             await emit({
                 "type": "box", "vm_id": vm_id, "region": cfg.region,
@@ -259,7 +262,7 @@ class SealedVmRunner:
 
     # --- Vultr API -----------------------------------------------------------
 
-    async def _create_and_wait(self, emit: Emit) -> tuple[str, str]:
+    async def _create_instance(self) -> str:
         cfg = self.config
         label = f"keysmith-job-{int(datetime.now().timestamp())}"
         body = {
@@ -272,22 +275,25 @@ class SealedVmRunner:
             "backups": "disabled",
         }
         data = await self._api("POST", "/instances", body)
-        inst = data.get("instance", {})
-        vm_id = inst.get("id")
+        vm_id = data.get("instance", {}).get("id")
         if not vm_id:
             raise RunnerError("Vultr did not return an instance id on create")
+        return vm_id
 
+    async def _wait_for_ssh(self, vm_id: str, emit: Emit) -> str:
+        """Wait until the job VM answers SSH. A snapshot-restored VM can sit in
+        server_status 'locked' for a while even after SSH is up, so the real gate
+        is SSH itself — not the reported status."""
+        cfg = self.config
         deadline = asyncio.get_event_loop().time() + cfg.boot_timeout_s
-        ip = ""
         while asyncio.get_event_loop().time() < deadline:
             await asyncio.sleep(5)
             info = (await self._api("GET", f"/instances/{vm_id}")).get("instance", {})
             ip = info.get("main_ip") or ""
             status = info.get("status")
             server_state = info.get("server_status")
-            if status == "active" and server_state in ("ok", "installingbooting") and ip and ip != "0.0.0.0":
-                if await self._ssh_ready(ip):
-                    return vm_id, ip
+            if status == "active" and ip and ip != "0.0.0.0" and await self._ssh_ready(ip):
+                return ip
             await emit({"type": "log", "line": f"waiting for box: status={status} server={server_state}"})
         raise RunnerError("the sealed box did not come up in time")
 
