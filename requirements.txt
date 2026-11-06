@@ -1,0 +1,6 @@
+# Keysmith control-VM (backend) runtime deps.
+# The core package (hints/compiler/estimator/receipt/llm/profile_agent) is pure
+# stdlib; these are only for the web API layer.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9

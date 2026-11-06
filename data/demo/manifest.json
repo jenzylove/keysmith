@@ -1,0 +1,30 @@
+{
+  "note": "Public test wallets, no mainnet funds. Passwords live only in the encrypted vaults.",
+  "demos": [
+    {
+      "id": "demo-rocky",
+      "wallet_type": "metamask",
+      "owner_story": "Ada made this MetaMask in 2018 for an NFT drop and never opened it again.",
+      "notes": "dog Rocky, year 98 or 99, maybe a '!'",
+      "wallet_file": "demo-rocky.json",
+      "answers": {
+        "names": "Rocky (my dog)",
+        "years": "1998 or 1999",
+        "symbols": "!",
+        "notes": "capital R, exclamation mark at the end"
+      }
+    },
+    {
+      "id": "demo-sara",
+      "wallet_type": "metamask",
+      "owner_story": "Tomas set up MetaMask in 2019 named after his wife and son, then lost the password.",
+      "notes": "Sara and Max, a dash or underscore between, lucky number 7",
+      "wallet_file": "demo-sara.json",
+      "answers": {
+        "names": "Sara (wife), Max (son)",
+        "numbers": "7, my lucky number",
+        "notes": "both names with capitals, an underscore or dash between them"
+      }
+    }
+  ]
+}

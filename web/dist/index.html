@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Keysmith — remember your wallet password, in a sealed box</title>
+<meta name="description" content="Turn what you half-remember about your old crypto wallet password into targeted guesses, tried inside a sealed box that can't send your wallet anywhere." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%97%9D%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#/" data-nav>
+    <span class="brand-mark">🗝️</span>
+    <span class="brand-name">Keysmith</span>
+  </a>
+  <nav class="topnav">
+    <a href="#/proof" data-nav>Proof</a>
+    <a href="#/start" class="btn btn-sm" data-nav>Start</a>
+  </nav>
+</header>
+
+<main id="app" aria-live="polite"></main>
+
+<footer class="footer">
+  <div>
+    Keysmith tries only guesses you approved, inside a per-job box with no network.
+    It won't crack strong random passwords, and it has no way to verify wallet
+    ownership — <strong>only run it on wallets you own.</strong>
+  </div>
+  <div class="footer-status" id="footer-status"></div>
+</footer>
+
+<template id="tpl-toast"><div class="toast"></div></template>
+
+<script src="app.js"></script>
+</body>
+</html>

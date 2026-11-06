@@ -1,0 +1,22 @@
+# Control VM reverse proxy. Caddy terminates TLS and proxies to uvicorn on :8000,
+# which serves both the API and the built web app (web/dist).
+#
+# Replace the site address with your domain (or the VM's sslip.io name). Caddy
+# fetches a certificate automatically.
+
+:80 {
+	# SSE needs buffering off so run-page events arrive live.
+	reverse_proxy 127.0.0.1:8000 {
+		flush_interval -1
+	}
+	encode gzip
+	header -Server
+}
+
+# For a real domain, use this block instead of :80 and Caddy will get HTTPS:
+# recover.example.com {
+#	reverse_proxy 127.0.0.1:8000 {
+#		flush_interval -1
+#	}
+#	encode gzip
+# }

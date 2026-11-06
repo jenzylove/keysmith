@@ -1,11 +1,11 @@
-# Dormant: PRD
+# Keysmith: PRD
 
 Hackathon: Vultr Agent Rush (lablab), Challenge 1 "Blast Radius Zero".
 Deadline: Nov 8 2026, 22:00 UTC.
 
 ## One liner
 
-Forgot the password to an old crypto wallet? Tell Dormant everything you half remember. It turns your memories into targeted guesses and tries them inside a sealed Vultr box that cannot send your wallet anywhere, not even to us.
+Forgot the password to an old crypto wallet? Tell Keysmith everything you half remember. It turns your memories into targeted guesses and tries them inside a sealed Vultr box that cannot send your wallet anywhere, not even to us.
 
 ## Reframe
 
@@ -47,13 +47,13 @@ Public demo: test wallets we create with a "forgotten" password and a written se
    - Per job: a fresh Vultr Cloud Compute instance created through the Vultr API (cloud init installs Docker + gVisor + btcrecover image), destroyed after the job.
    - Inside: the cracker container runs with `--runtime=runsc --network=none`, the wallet mounted read only.
    - The agent never gets a tool that reads the wallet. Its sandbox shell (used to test token files) runs in a separate gVisor container with no wallet mount and no network.
-   - Host nftables drop all outbound traffic from the job VM except the control channel to the Dormant backend; the wallet bytes never cross it (only progress numbers and the final result).
+   - Host nftables drop all outbound traffic from the job VM except the control channel to the Keysmith backend; the wallet bytes never cross it (only progress numbers and the final result).
    - Fallback if per job VMs are too slow to boot for the demo: per job gVisor containers on a dedicated runner VM, same isolation inside. Which mode ran is shown on the run page.
 4. **Containment moment.** A poisoned hint (prompt injection inside the user's own pasted notes, e.g. an old text file) tells the agent to read and upload the wallet. The agent's attempt is logged: file read denied (no such mount), outbound connect blocked (network none). Shown on the run page and in the video.
 5. **Wallet types:** Bitcoin Core wallet.dat, Blockchain.info, MetaMask vault, Electrum, BIP39 seed with up to 2 missing or wrong words (seedrecover).
 6. **Estimator.** Candidate count from btcrecover's listing mode times measured speed on the job VM for the wallet type. Odds shown as a range with the reasoning, never a single fake number.
 7. **Self destruct and receipt.** After success, failure, or timeout the VM is destroyed through the API; receipt lists the API call result.
-8. **Run in your own Vultr account.** An open script (`dormant-local`) that creates the sealed VM with the user's own Vultr key from their machine. Our site never sees their key or file.
+8. **Run in your own Vultr account.** An open script (`keysmith-local`) that creates the sealed VM with the user's own Vultr key from their machine. Our site never sees their key or file.
 9. **Proof page** (`/proof`). Answer key of 20 test wallets, each with a realistic hint set written before the run. Results: agent rules vs plain btcrecover defaults (same time budget), recovered or not, guesses needed. Misses published with the fix.
 10. **Web app** served from a Vultr VM: landing, start, interview, plan, run, result, proof.
 

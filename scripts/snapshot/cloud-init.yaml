@@ -1,0 +1,48 @@
+#cloud-config
+# Applied to every job VM at first boot, from the Keysmith snapshot.
+#
+# Order matters: the egress lock is written and enabled BEFORE anything else can
+# run, so there is never a window in which the box can reach the network. Docker,
+# gVisor (runsc) and the btcrecover image are already baked into the snapshot, so
+# no package install (and therefore no outbound traffic) is needed here.
+#
+# The control VM reaches this box only over inbound SSH; the box can never open
+# an outbound connection (output + forward chains both drop — the S3 spike fix).
+
+write_files:
+  - path: /etc/nftables-ks.conf
+    permissions: "0644"
+    content: |
+      #!/usr/sbin/nft -f
+      flush ruleset
+      table inet ks {
+        chain output {
+          type filter hook output priority 0; policy drop;
+          oif "lo" accept
+          ct state established,related accept
+          counter comment "dropped egress"
+        }
+        chain forward {
+          type filter hook forward priority 0; policy drop;
+          ct state established,related accept
+          counter comment "dropped container egress (spike fix)"
+        }
+        chain input {
+          type filter hook input priority 0; policy drop;
+          iif "lo" accept
+          ct state established,related accept
+          tcp dport 22 ct state new accept
+          counter comment "dropped inbound"
+        }
+      }
+
+runcmd:
+  # 1. Lock egress first, before any workload.
+  - [ nft, -f, /etc/nftables-ks.conf ]
+  # 2. Persist the lock across any reboot within the job's life.
+  - [ cp, /etc/nftables-ks.conf, /etc/nftables.conf ]
+  - [ systemctl, enable, nftables ]
+  # 3. Make sure gVisor is the default runtime and Docker is up (baked in).
+  - [ systemctl, restart, docker ]
+  # 4. Signal readiness for the control VM's SSH push.
+  - [ sh, -c, "echo sealed > /run/keysmith-ready" ]
