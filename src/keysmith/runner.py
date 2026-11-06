@@ -103,7 +103,7 @@ class VmConfig:
     ssh_user: str = "root"
     vcpus: int = 2
     api_base: str = "https://api.vultr.com/v2"
-    boot_timeout_s: int = 420   # snapshot-restored VMs can stay 'locked' a while
+    boot_timeout_s: int = 900   # snapshot restores can take several minutes to unlock
     job_timeout_s: int = 1800
     image: str = "keysmith/btcrecover"   # baked into the snapshot
     remote_job_dir: str = "/job"
@@ -292,17 +292,28 @@ class SealedVmRunner:
             ip = info.get("main_ip") or ""
             status = info.get("status")
             server_state = info.get("server_status")
-            if status == "active" and ip and ip != "0.0.0.0" and await self._ssh_ready(ip):
-                return ip
+            # Only try SSH once the restore has unlocked (server_status 'ok'); a
+            # 'locked' VM won't answer, and a wasted SSH timeout burns the budget.
+            if status == "active" and server_state == "ok" and ip and ip != "0.0.0.0":
+                if await self._ssh_ready(ip):
+                    return ip
             await emit({"type": "log", "line": f"waiting for box: status={status} server={server_state}"})
-        raise RunnerError("the sealed box did not come up in time")
+        raise RunnerError("the sealed box did not come up in time (snapshot restore too slow)")
 
     async def _destroy(self, vm_id: str) -> str:
-        try:
-            await self._api("DELETE", f"/instances/{vm_id}", expect_json=False)
-            return "HTTP 204 deleted"
-        except RunnerError as exc:
-            return f"delete failed: {exc}"
+        # Vultr returns 409 "Server is currently locked" while a VM is still
+        # being set up/restored; retry until it unlocks so the VM never leaks.
+        for attempt in range(8):
+            try:
+                await self._api("DELETE", f"/instances/{vm_id}", expect_json=False)
+                return "HTTP 204 deleted"
+            except RunnerError as exc:
+                msg = str(exc)
+                if ("409" in msg or "locked" in msg.lower()) and attempt < 7:
+                    await asyncio.sleep(20)
+                    continue
+                return f"delete failed: {exc}"
+        return "delete failed: still locked after retries"
 
     async def _api(self, method: str, path: str, body: Optional[dict] = None,
                    *, expect_json: bool = True) -> dict:
