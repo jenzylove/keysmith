@@ -106,3 +106,23 @@
   then run the 20-case proof set and write data/proof/results.json; deploy control VM.
   NOTE: keysmith-builder + keysmith-control VMs may still be running on Vultr (lhr) —
   delete the builder if unused; SSH key is in ~/keysmith-launch/ssh.
+
+- 2026-11-06 (session 6): merged the build to main (single clean commit, no attribution).
+  - LIVE inference verified through the shipped code (VULTR_INFERENCE_KEY present):
+    keysmith.profile_agent + compiler over the 5 dev cases via deepseek-v4.1-flash-1017
+    recovered 4/5 (miss: "98 or 99" not expanded to 1998/1999 by the model — the
+    committed demo answers use "1998 or 1999" and are verified winnable). The poisoned
+    note was handled safely: only schema fields survived, exfil_url dropped.
+  - Attempted to bake the job-VM snapshot from this cloud session using the Vultr API
+    only (boot-time startup script: docker + gVisor + btcrecover image + containment
+    checks, power-off on success as the signal). The builder never powered off within
+    ~21 min and could not be diagnosed: this sandbox has NO outbound SSH (the agent
+    proxy tunnels HTTPS only; port 22 is refused even to github.com) and cannot read a
+    VM's logs. Cleaned up (deleted the agent builder VM, startup script, and the agent
+    SSH key). keysmith-builder + keysmith-control left running per the user.
+  - CONCLUSION: the snapshot build and the live SealedVmRunner run are SSH-bound and
+    must be done from a host with normal outbound networking (the control VM), not this
+    sandbox. The code is ready; see scripts/snapshot/README.md. On the control VM:
+    scripts/snapshot/build-snapshot.sh provision <builder_ip> <ssh_key>
+    scripts/snapshot/build-snapshot.sh snapshot <builder_vm_id>   # -> KEYSMITH_SNAPSHOT_ID
+    then set the five KEYSMITH_* / VULTR_* env vars and run one job end to end.
