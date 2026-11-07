@@ -288,7 +288,13 @@ class SealedVmRunner:
         deadline = asyncio.get_event_loop().time() + cfg.boot_timeout_s
         while asyncio.get_event_loop().time() < deadline:
             await asyncio.sleep(5)
-            info = (await self._api("GET", f"/instances/{vm_id}")).get("instance", {})
+            try:
+                info = (await self._api("GET", f"/instances/{vm_id}")).get("instance", {})
+            except RunnerError as exc:
+                # Transient Vultr API hiccup (500/timeout) during the long boot
+                # poll — keep waiting rather than abandoning a healthy VM.
+                await emit({"type": "log", "line": f"poll retry ({exc})"})
+                continue
             ip = info.get("main_ip") or ""
             status = info.get("status")
             server_state = info.get("server_status")
