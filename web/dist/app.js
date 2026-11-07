@@ -63,25 +63,35 @@ async function refreshStatus() {
 }
 
 /* ---------- landing ---------- */
+const ICON = {
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="9.5" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/><circle cx="12" cy="15" r="1.3"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.1"/><circle cx="4.5" cy="12" r="1.1"/><circle cx="4.5" cy="18" r="1.1"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 7.8-7 9-4-1.2-7-4.4-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+};
+
 function viewLanding() {
   render(h(`<section>
     <div class="hero">
-      <h1>Your old wallet is still there.<br/>Let's remember the password together.</h1>
-      <p class="lede">Tell Keysmith everything you half-remember — a name, a year, the way you
-        swap letters for numbers. It turns your memories into targeted guesses and tries them
-        inside a sealed box that cannot send your wallet anywhere, not even to us.</p>
+      <div class="eyebrow">Non-custodial wallet-password recovery · runs on Vultr</div>
+      <h1>Your old wallet is still there.<br/><span class="accent">Let's remember the password.</span></h1>
+      <p class="lede">Tell Keysmith what you half-remember — a name, a year, the way you swap
+        letters for numbers. It turns your memories into targeted guesses and tries them inside
+        a sealed box that can't send your wallet anywhere. Not even to us.</p>
       <div class="cta-row">
         <a class="btn" href="#/start" data-nav>Start a recovery</a>
-        <a class="btn secondary" href="#/start?demo=1" data-nav>Watch a demo wallet open</a>
+        <a class="btn secondary" href="#/start?demo=1" data-nav>Watch a demo wallet open ↗</a>
       </div>
     </div>
-    <div class="grid" style="margin-top:34px">
-      <div class="choice"><div class="title">🔒 Sealed, every job</div>
-        <div class="meta">A fresh box per recovery, no network, wallet mounted read-only, destroyed after. A teardown receipt proves it.</div></div>
-      <div class="choice"><div class="title">🎯 Smart guesses, not brute force</div>
-        <div class="meta">You see the exact list before anything runs. No hidden expansion, honest odds, honest misses.</div></div>
-      <div class="choice"><div class="title">🧪 Break-in test on camera</div>
-        <div class="meta">A poisoned hint that tells the agent to read and upload your wallet — watch it get denied, live.</div></div>
+    <div class="features">
+      <div class="feature"><span class="feat-ico">${ICON.lock}</span>
+        <div><div class="title">Sealed, every job</div>
+        <div class="meta">A fresh VM per recovery — no network, wallet mounted read-only, destroyed after. A teardown receipt proves it.</div></div></div>
+      <div class="feature"><span class="feat-ico">${ICON.list}</span>
+        <div><div class="title">Smart guesses, not brute force</div>
+        <div class="meta">You see the exact list before anything runs. No hidden expansion — honest odds, and honest misses.</div></div></div>
+      <div class="feature"><span class="feat-ico">${ICON.shield}</span>
+        <div><div class="title">Break-in test, on camera</div>
+        <div class="meta">A poisoned hint that tells the agent to read and upload your wallet — watch it get denied, live.</div></div></div>
     </div>
   </section>`));
 }
