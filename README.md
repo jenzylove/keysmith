@@ -11,11 +11,20 @@ destroyed after the run, with a teardown receipt that proves it.
 
 Built for the Vultr Agent Rush hackathon (Challenge 1, "Blast Radius Zero").
 
-## Judge fast path
+## Live demo
+
+**https://95-179-195-57.sslip.io** — the real app on a Vultr control VM. Click
+*Watch a demo wallet open*; a fresh sealed Vultr VM is created per job (allow
+~8 min for the snapshot restore), the containment break-in test is blocked on
+screen, the password is recovered, and the VM is destroyed with a teardown
+receipt. Verified end to end on real infrastructure (see `docs/BUILD_LOG.md`,
+2026-11-07).
+
+## Judge fast path (offline, no keys)
 
 ```bash
 pip install -r requirements.txt
-python scripts/devserver.py          # http://127.0.0.1:8000  (offline demo, no keys)
+python scripts/devserver.py          # http://127.0.0.1:8000  (scripted demo, no Vultr)
 ```
 
 Open it, click **Watch a demo wallet open**, answer the short interview, accept the
@@ -32,6 +41,8 @@ path is the same code with the real runner (below).
   snapshot, verifies containment, pushes the wallet + candidate list over inbound SSH,
   runs btcrecover under gVisor `--network=none`, streams progress, destroys the VM.
   Ships as `NullRunner` until the five Vultr env vars are set — it never fakes a run.
+  **Proven live end to end on Vultr (2026-11-07): sealed box, containment held,
+  password recovered, VM destroyed, zero wallet bytes egressed.**
 - **Containment**, proven in the S3 spike and shown on the run page: output **and**
   forward nftables chains drop, `runsc` runtime, wallet `:ro`, agent box has no wallet.
 - **Demo + proof**: real test vaults (no funds), and a 20-case answer key written blind
