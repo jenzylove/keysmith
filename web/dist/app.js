@@ -319,17 +319,18 @@ async function viewStart(demoFlag){
 
   const node=h(`<div class="appwrap">
     ${crumbs("type")}
-    <div class="panel"><h2>Watch a demo wallet open</h2>
-      <p class="sub">Public test wallets, no funds. You play the owner: answer the interview and watch it open end to end.</p>
-      <div class="rows">${demoRows||'<p class="note">No demo wallets on this build yet.</p>'}</div></div>
     <div class="panel"><h2>Recover your own wallet</h2>
       <p class="sub">Pick your wallet type. You see every guess before anything runs, and nothing is uploaded until you accept the plan.</p>
       <div class="rows">${typeRows}</div></div>
+    <div class="panel" id="demo-panel"><h2>Or try a live demo</h2>
+      <p class="sub">No wallet of your own? These are real test wallets with no funds. Play the owner, answer the interview, and watch the sealed box open one end to end.</p>
+      <div class="rows">${demoRows||'<p class="note">No demo wallets on this build yet.</p>'}</div></div>
   </div>`);
   $$("[data-type]",node).forEach((b)=>b.onclick=()=>beginJob({wallet_type:b.dataset.type}));
   $$("[data-demo]",node).forEach((b)=>b.onclick=()=>beginJob({demo_id:b.dataset.demo}));
   render(node);
-  if(demoFlag&&demoFlag!=="1"){const b=$(`[data-demo="${demoFlag}"]`,node);if(b)b.click();}
+  if(demoFlag&&demoFlag!=="1"){const b=$(`[data-demo="${demoFlag}"]`,node);if(b)return b.click();}
+  if(demoFlag==="1"){const p=$("#demo-panel",node);if(p)setTimeout(()=>p.scrollIntoView({behavior:"smooth"}),80);}
 }
 
 async function beginJob(payload){
