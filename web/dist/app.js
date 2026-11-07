@@ -139,17 +139,15 @@ async function viewLanding(){
   }
 
   const node=h(`<div>
-    <section class="hero"><div class="wrap hero-grid">
-      <div>
-        <div class="eyebrow">Vultr Agent Rush · sealed recovery</div>
-        <h1>Your old wallet is <span class="pill-word">still</span> there.</h1>
-        <p class="lede">Tell Keysmith what you half remember, a name, a year, the way you swap letters for numbers. It turns your memories into targeted guesses and tries them inside a sealed box that cannot send your wallet anywhere, not even to us.</p>
-        <div class="cta-row">
-          <a class="btn" href="#/app" data-nav>Start a recovery</a>
-          <a class="btn secondary" href="#/app?demo=1" data-nav>Watch a demo wallet open</a>
-        </div>
-        ${statusStrip(health)}
+    <section class="hero"><div class="wrap hero-center">
+      <div class="eyebrow">Vultr Agent Rush · sealed recovery</div>
+      <h1>Your old wallet is <span class="pill-word">still</span> there.</h1>
+      <p class="lede">Tell Keysmith what you half remember, a name, a year, the way you swap letters for numbers. It becomes a short list of targeted guesses, tried inside a sealed box that cannot send your wallet anywhere, not even to us.</p>
+      <div class="cta-row center">
+        <a class="btn" href="#/app" data-nav>Start a recovery</a>
+        <a class="btn secondary" href="#/app?demo=1" data-nav>Watch a demo wallet open</a>
       </div>
+      ${statusStrip(health)}
       <div class="keystage"></div>
     </div></section>
 
