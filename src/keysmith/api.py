@@ -47,16 +47,16 @@ DATA_DIR = os.environ.get("KEYSMITH_DATA_DIR", "data")
 
 # wallet type id -> (label, input, estimator key, notes)
 WALLET_TYPES = [
-    ("metamask", "MetaMask vault", "file", "metamask",
-     "Browser-extension vault.json. PBKDF2 then AES-GCM."),
-    ("bitcoin_core", "Bitcoin Core wallet.dat", "file", "bitcoin_core_bdb",
-     "The classic desktop wallet. Slow by design, so hints matter most here."),
-    ("electrum", "Electrum wallet", "file", "electrum_passphrase",
-     "Electrum wallet file protected by a passphrase."),
-    ("blockchain", "Blockchain.info backup", "file", "blockchain_v3",
-     "wallet.aes.json export. AES-CBC with a PBKDF2 key."),
-    ("bip39_seed", "Seed phrase (missing words)", "seed", "bip39_seed",
-     "A 12/24-word seed with up to 2 missing or wrong words, plus one address."),
+    ("metamask", "MetaMask password", "file", "metamask",
+     "The password that unlocks MetaMask on your browser, not your seed phrase. We open your local vault file so you can log back in."),
+    ("bitcoin_core", "Bitcoin Core password", "file", "bitcoin_core_bdb",
+     "The password for a Bitcoin Core wallet.dat file. Slow by design, so smart guesses matter most here."),
+    ("electrum", "Electrum password", "file", "electrum_passphrase",
+     "The password that unlocks an Electrum wallet file."),
+    ("blockchain", "Blockchain.com password", "file", "blockchain_v3",
+     "The password for a Blockchain.com wallet backup (the wallet.aes.json file)."),
+    ("bip39_seed", "Lost a word in your seed phrase", "seed", "bip39_seed",
+     "The only option that recovers a phrase, not a password. Missing a word or two of your 12 or 24 word seed? We find them from one known address."),
 ]
 WALLET_IDS = {w[0] for w in WALLET_TYPES}
 WALLET_ESTIMATOR_KEY = {w[0]: w[3] for w in WALLET_TYPES}

@@ -494,6 +494,8 @@ class SealedVmRunner:
                     found, password = True, pw
                 if _is_exhausted(line):
                     found = False
+                if _is_noise(line):
+                    continue
                 # Never echo the found password into the log stream.
                 safe = line if password is None else line.replace(password, "********")
                 await emit({"type": "log", "line": safe[:200]})
@@ -501,8 +503,8 @@ class SealedVmRunner:
             proc.kill()
             raise RunnerError("the recovery run exceeded its time budget")
         await proc.wait()
-        if tried == 0 and total:
-            tried = total if not found else tried
+        if tried == 0:
+            tried = 1 if found else (total or 0)
         return found, password, tried
 
     def _job_dir(self, job) -> str:
@@ -572,6 +574,13 @@ table inet ks {
 # --- btcrecover output parsing ----------------------------------------------
 
 _FOUND_RE = re.compile(r"Password found\s*:\s*'(.*)'")
+# btcrecover prints a donation/credits banner at startup; keep it out of the
+# user-facing log so the run reads clean.
+_NOISE_RE = re.compile(r"reddit|donat|gurnec|you may also consider|maintained this tool|user/Crypto|github\.com|bitcointalk|3Au8Zod|0x[0-9a-fA-F]{20}|find me on|please (visit|star)", re.I)
+
+
+def _is_noise(line: str) -> bool:
+    return bool(_NOISE_RE.search(line))
 _PROGRESS_RE = re.compile(r"(\d+)\s*/\s*(\d+)")
 
 

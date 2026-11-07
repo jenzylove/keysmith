@@ -320,7 +320,7 @@ async function viewStart(demoFlag){
   const node=h(`<div class="appwrap">
     ${crumbs("type")}
     <div class="panel"><h2>Recover your own wallet</h2>
-      <p class="sub">Pick your wallet type. You see every guess before anything runs, and nothing is uploaded until you accept the plan.</p>
+      <p class="sub">Pick your wallet type. For a wallet, Keysmith finds the <b>password</b> that unlocks it on your device, not your seed phrase. Lost a word of your seed phrase instead? That is the last option.</p>
       <div class="rows">${typeRows}</div></div>
     <div class="panel" id="demo-panel"><h2>Or try a live demo</h2>
       <p class="sub">No wallet of your own? These are real test wallets with no funds. Play the owner, answer the interview, and watch the sealed box open one end to end.</p>
@@ -508,7 +508,10 @@ function handleEvent(node,ev,ctx){
 function showResult(node,ev){
   const panel=$("#result-panel",node);panel.style.display="block";panel.className="panel";
   if(ev.found){
+    const isSeed=state.job&&state.job.wallet_type==="bip39_seed";
+    const what=isSeed?"This completes your seed phrase. Import it into your wallet to restore it.":"This is the password that unlocks this wallet on your device. Open the wallet and enter it to get back in.";
     panel.innerHTML=`<h2>Found it</h2><div class="reveal-pw" id="pw">${esc(ev.password)}</div>
+      <p class="sub" style="margin:10px 0 4px">${what}</p>
       <div class="once">Shown once. Copy it now: it is never stored and the box is being destroyed.</div>
       <div class="cta-row" style="margin-top:12px"><button class="btn" id="copy">Copy password</button></div>`;
     $("#copy",panel).onclick=()=>navigator.clipboard?.writeText(ev.password).then(()=>toast("copied"));
