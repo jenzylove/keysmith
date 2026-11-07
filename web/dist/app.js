@@ -128,11 +128,13 @@ async function viewLanding(){
 
   let proofMini;
   if(proof&&proof.status!=="not run"){
-    const rec=proof.recovered!=null?proof.recovered:(proof.summary_counts&&proof.summary_counts.recovered);
-    const tot=proof.total!=null?proof.total:(proof.cases?proof.cases.length:(proof.results?proof.results.length:20));
+    const cs=proof.cases||proof.results||[];
+    const tot=cs.length||20;
+    const rec=cs.filter((c)=>c.found).length;
+    const base=cs.filter((c)=>c.baseline_found).length;
     proofMini=`<div class="proofbar">
-      <div class="pstat"><div class="n">${rec!=null?rec:"n/a"}/${tot}</div><div class="k">recovered from memory</div></div>
-      <div class="pstat"><div class="n">0/${tot}</div><div class="k">recovered by plain defaults</div></div>
+      <div class="pstat"><div class="n">${rec}/${tot}</div><div class="k">recovered from memory</div></div>
+      <div class="pstat"><div class="n">${base}/${tot}</div><div class="k">recovered by plain defaults</div></div>
     </div><p class="sec-sub">We publish the misses, not only the wins.</p>`;
   }else{
     proofMini=`<p class="sec-sub">The answer key of 20 test wallets is written blind, 15 recoverable and 5 honest misses. Results publish here once the full set runs on Vultr.</p>`;
