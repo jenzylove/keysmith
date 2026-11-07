@@ -496,16 +496,19 @@ class SealedVmRunner:
             # No wallet file to mount; the mnemonic is the input. Still no network.
             return (
                 f"docker run --rm --runtime=runsc --network=none "
-                f"{cfg.image} {inner}"
+                f"-w /tmp {cfg.image} {inner}"
             )
         fname = _WALLET_FILENAME.get(job.wallet_type, "wallet.bin")
         inner = (
             f"python btcrecover.py --wallet /job/{fname} "
             f"--passwordlist /job/list.txt --no-eta --dsw"
         )
+        # -w /tmp: a writable CWD for the non-root user (btcrecover's MetaMask
+        # loader writes possible_passwords.log into the working dir). /tmp is
+        # inside the sealed, read-only-wallet container and dies with it.
         return (
             f"docker run --rm --runtime=runsc --network=none "
-            f"-v {d}:/job:ro {cfg.image} {inner}"
+            f"-w /tmp -v {d}:/job:ro {cfg.image} {inner}"
         )
 
 
