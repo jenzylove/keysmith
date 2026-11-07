@@ -43,7 +43,7 @@ from datetime import datetime, timezone
 from typing import Awaitable, Callable, Dict, List, Optional, Protocol
 
 from .receipt import (
-    TeardownReceipt, MODE_PER_JOB_VM,
+    TeardownReceipt, MODE_PER_JOB_VM, MODE_RUNNER_CONTAINER,
     OUTCOME_FOUND, OUTCOME_NOT_FOUND, OUTCOME_ERROR,
 )
 
@@ -107,6 +107,7 @@ class VmConfig:
     job_timeout_s: int = 1800
     image: str = "keysmith/btcrecover"   # baked into the snapshot
     remote_job_dir: str = "/job"
+    runner_ip: str = ""   # warm mode: a persistent, pre-booted sealed runner VM
 
     @classmethod
     def from_env(cls) -> Optional["VmConfig"]:
@@ -121,6 +122,23 @@ class VmConfig:
             ssh_key_path=os.path.expanduser(ssh_key_path),
             region=os.environ.get("KEYSMITH_REGION", "lhr"),
             plan=os.environ.get("KEYSMITH_PLAN", "vc2-2c-4gb"),
+        )
+
+    @classmethod
+    def warm_from_env(cls) -> Optional["VmConfig"]:
+        """Warm mode: a persistent sealed runner VM is already booted and sealed,
+        so each job is a fresh gVisor container on it (seconds), not a snapshot
+        restore (minutes). Needs only the runner IP and the SSH key."""
+        runner_ip = os.environ.get("KEYSMITH_RUNNER_IP", "")
+        ssh_key_path = os.environ.get("KEYSMITH_SSH_KEY", "")
+        if not (runner_ip and ssh_key_path):
+            return None
+        return cls(
+            api_key=os.environ.get("VULTR_API_KEY", ""),
+            snapshot_id="", sshkey_id="",
+            ssh_key_path=os.path.expanduser(ssh_key_path),
+            runner_ip=runner_ip,
+            region=os.environ.get("KEYSMITH_REGION", "lhr"),
         )
 
 
@@ -427,7 +445,7 @@ class SealedVmRunner:
         """Pipe the passwordlist and wallet into the job dir over SSH stdin, so
         neither ever lands on the control VM's disk."""
         cfg = self.config
-        d = cfg.remote_job_dir
+        d = self._job_dir(job)
         await self._ssh(ip, f"mkdir -p {d}")
         # passwordlist (for file-password wallets) or mnemonic file (for seeds).
         pl = job.passwordlist.encode("utf-8")
@@ -487,9 +505,14 @@ class SealedVmRunner:
             tried = total if not found else tried
         return found, password, tried
 
+    def _job_dir(self, job) -> str:
+        """Remote dir holding this job's wallet + candidate list. Per-job so a
+        shared warm runner can run several jobs without collision."""
+        return self.config.remote_job_dir
+
     def _crack_command(self, job) -> str:
         cfg = self.config
-        d = cfg.remote_job_dir
+        d = self._job_dir(job)
         if job.wallet_type == "bip39_seed":
             mnemonic = " ".join(job.seed_words or [])
             addr = job.seed_address or ""
@@ -569,7 +592,93 @@ def _parse_progress(line: str) -> Optional[int]:
     return None
 
 
+class WarmVmRunner(SealedVmRunner):
+    """A persistent, pre-booted, sealed runner VM. Each job is a fresh gVisor
+    container on it, so there is no snapshot-restore wait: a run starts in
+    seconds. Containment is identical (host egress locked once, every container
+    runs --runtime=runsc --network=none with the wallet read only). The VM is
+    not destroyed between jobs; the per-job dir and container are."""
+
+    name = "vm"
+
+    def _job_dir(self, job) -> str:
+        return f"/run/keysmith/{job.id}"
+
+    async def run(self, job, emit: Emit) -> None:
+        cfg = self.config
+        ip = cfg.runner_ip
+        created_at = _now()
+        outcome = OUTCOME_ERROR
+        guesses_tried = 0
+        try:
+            await emit({"type": "stage", "stage": "creating_box"})
+            job._vm_ip = ip
+            await emit({"type": "box", "vm_id": "warm-sealed-runner",
+                        "region": cfg.region, "plan": "shared sealed host", "ip_hidden": True})
+
+            await emit({"type": "stage", "stage": "sealing"})
+            await self._apply_egress_lock(ip, emit)
+            checks = await self._verify_seal(ip, emit)
+            await emit({"type": "seal", "checks": checks})
+
+            await emit({"type": "stage", "stage": "uploading"})
+            await self._upload(ip, job, emit)
+
+            await emit({"type": "stage", "stage": "running"})
+            found, password, guesses_tried = await self._crack(ip, job, emit)
+
+            if found:
+                await emit({"type": "stage", "stage": "found"})
+                await emit({"type": "result", "found": True, "password": password})
+                outcome = OUTCOME_FOUND
+            else:
+                await emit({"type": "stage", "stage": "not_found"})
+                await emit({"type": "result", "found": False})
+                outcome = OUTCOME_NOT_FOUND
+        except RunnerError as exc:
+            await emit({"type": "error", "message": str(exc)})
+        except Exception as exc:  # pragma: no cover - defensive
+            await emit({"type": "error", "message": f"unexpected runner error: {exc}"})
+        finally:
+            # Wipe this job's wallet + candidate list from the shared runner. The
+            # cracker container was --rm, so it is already gone.
+            try:
+                await self._ssh(ip, f"rm -rf {self._job_dir(job)}", check=False)
+            except Exception:  # pragma: no cover - defensive
+                pass
+            if outcome == OUTCOME_ERROR:
+                await emit({"type": "stage", "stage": "error"})
+            else:
+                await emit({"type": "stage", "stage": "destroying"})
+                await emit({"type": "stage", "stage": "destroyed"})
+            receipt = TeardownReceipt(
+                job_id=job.id,
+                mode=MODE_RUNNER_CONTAINER,
+                wallet_type=job.wallet_type,
+                outcome=outcome,
+                created_at=created_at,
+                destroyed_at=_now(),
+                guesses_tried=guesses_tried,
+                bytes_egressed_wallet=0,
+                vm_id=None,
+                api_delete_status="container removed; job files wiped",
+                network_mode="none",
+                agent_wallet_mounts=0,
+            )
+            try:
+                receipt.validate()
+            except Exception:  # pragma: no cover - defensive
+                pass
+            await emit({"type": "receipt", "receipt": receipt.to_dict()})
+
+
 def build_default_runner() -> Runner:
-    """A SealedVmRunner if the environment is fully configured, else NullRunner."""
+    """Warm runner if a persistent sealed VM is configured (fast), else a per-job
+    VM runner if the full Vultr config is present, else NullRunner."""
+    mode = os.environ.get("KEYSMITH_RUNNER", "").lower()
+    if mode in ("warm", "", "auto"):
+        warm = VmConfig.warm_from_env()
+        if warm:
+            return WarmVmRunner(warm)
     cfg = VmConfig.from_env()
     return SealedVmRunner(cfg) if cfg else NullRunner()

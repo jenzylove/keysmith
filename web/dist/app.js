@@ -330,7 +330,7 @@ async function viewStart(demoFlag){
   $$("[data-demo]",node).forEach((b)=>b.onclick=()=>beginJob({demo_id:b.dataset.demo}));
   render(node);
   if(demoFlag&&demoFlag!=="1"){const b=$(`[data-demo="${demoFlag}"]`,node);if(b)return b.click();}
-  if(demoFlag==="1"){const p=$("#demo-panel",node);if(p)setTimeout(()=>p.scrollIntoView({behavior:"smooth"}),80);}
+  if(demoFlag==="1"){const b=$("[data-demo]",node);if(b)return b.click();}
 }
 
 async function beginJob(payload){
@@ -400,11 +400,9 @@ function viewPlan(){
       <div class="stat-row">
         <div class="stat"><div class="n">${fmtInt(p.candidate_count)}</div><div class="k">guesses, in order</div></div>
         <div class="stat"><div class="n">${est.pw_per_sec?fmtInt(est.pw_per_sec):"n/a"}</div><div class="k">guesses/sec on the box</div></div></div>
-      <div class="odds">
-        <div><b>Expected</b> (found about halfway): ${est.expected_s?esc(rangeText(est.expected_s)):"n/a"}.</div>
-        <div><b>Worst case</b> (full scan): ${est.worst_case_s?esc(rangeText(est.worst_case_s)):"n/a"}.</div>
-        <div style="margin-top:6px" class="note">${esc(est.reasoning||"")}</div></div>
-      <details class="raw"><summary>Show the raw guesses we will try (first ${(p.sample||[]).length})</summary>
+      <div class="odds">Likely found in <b>${est.expected_s?esc(rangeText(est.expected_s)):"a moment"}</b>, and at most <b>${est.worst_case_s?esc(rangeText(est.worst_case_s)):"a few seconds"}</b> to try every guess.</div>
+      <details class="raw"><summary>Show the raw guesses and the math</summary>
+        <p class="note" style="margin-bottom:10px">${esc(est.reasoning||"")}</p>
         <div class="codelist">${sample||"(none)"}</div>
         <p class="note">This is literally what runs, no hidden expansion.</p></details>
       <div class="cta-row"><button class="btn" id="accept-plan">Accept and ${j.walletLoaded?"open the box":"continue"}</button>
