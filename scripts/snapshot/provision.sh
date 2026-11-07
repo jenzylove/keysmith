@@ -19,13 +19,16 @@ echo "[2/4] gVisor (runsc)"
 if ! command -v runsc >/dev/null 2>&1; then
   (
     set -e
+    # gVisor now ships a single tarball (the old per-binary runsc/containerd-shim
+    # URLs under latest/<arch>/ return 404); download, verify, extract, install.
+    tmp="$(mktemp -d)"; cd "$tmp"
     ARCH="$(uname -m)"
     URL="https://storage.googleapis.com/gvisor/releases/release/latest/${ARCH}"
-    wget -q "${URL}/runsc" "${URL}/runsc.sha512" \
-         "${URL}/containerd-shim-runsc-v1" "${URL}/containerd-shim-runsc-v1.sha512"
-    sha512sum -c runsc.sha512 -c containerd-shim-runsc-v1.sha512
+    wget -q "${URL}/gvisor.tar.bz2" "${URL}/gvisor.tar.bz2.sha512"
+    sha512sum -c gvisor.tar.bz2.sha512
+    tar -xf gvisor.tar.bz2
     chmod a+rx runsc containerd-shim-runsc-v1
-    mv runsc containerd-shim-runsc-v1 /usr/local/bin/
+    mv -f runsc containerd-shim-runsc-v1 /usr/local/bin/
   )
   /usr/local/bin/runsc install
 fi
