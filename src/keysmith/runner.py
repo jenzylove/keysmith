@@ -422,13 +422,17 @@ class SealedVmRunner:
         neither ever lands on the control VM's disk."""
         cfg = self.config
         d = cfg.remote_job_dir
-        await self._ssh(ip, f"mkdir -p {d} && chmod 700 {d}")
+        await self._ssh(ip, f"mkdir -p {d}")
         # passwordlist (for file-password wallets) or mnemonic file (for seeds).
         pl = job.passwordlist.encode("utf-8")
         await self._ssh(ip, f"cat > {d}/list.txt", stdin=pl)
         if job.wallet_bytes:
             fname = _WALLET_FILENAME.get(job.wallet_type, "wallet.bin")
             await self._ssh(ip, f"cat > {d}/{fname}", stdin=job.wallet_bytes)
+        # The cracker container runs as a non-root user (USER runner in the image)
+        # with /job mounted read-only; make the dir traversable and the files
+        # world-readable so it can read them. The VM is sealed and ephemeral.
+        await self._ssh(ip, f"chmod -R a+rX {d}")
         await emit({"type": "log", "line": "wallet and candidate list uploaded over SSH"})
 
     async def _crack(self, ip: str, job, emit: Emit) -> tuple[bool, Optional[str], int]:
