@@ -488,7 +488,7 @@ class SealedVmRunner:
             mnemonic = " ".join(job.seed_words or [])
             addr = job.seed_address or ""
             inner = (
-                "python seedrecover.py --wallet-type bip39 "
+                "python /opt/btcrecover/seedrecover.py --wallet-type bip39 "
                 f"--mnemonic {shlex.quote(mnemonic)} "
                 f"--mnemonic-length {len(job.seed_words or [])} "
                 f"--addrs {shlex.quote(addr)} --addr-limit 1 --no-eta"
@@ -500,7 +500,7 @@ class SealedVmRunner:
             )
         fname = _WALLET_FILENAME.get(job.wallet_type, "wallet.bin")
         inner = (
-            f"python btcrecover.py --wallet /job/{fname} "
+            f"python /opt/btcrecover/btcrecover.py --wallet /job/{fname} "
             f"--passwordlist /job/list.txt --no-eta --dsw"
         )
         # -w /tmp: a writable CWD for the non-root user (btcrecover's MetaMask
