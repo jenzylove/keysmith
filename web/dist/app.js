@@ -41,6 +41,7 @@ function wireReveal(){
 /* ---------- persistent nav ---------- */
 const KEY_GLYPH=`<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="22" cy="22" r="12" fill="none" stroke="var(--brass)" stroke-width="5"/><path d="M30 30 L52 52 M44 44 l7 -7 M50 50 l6 -6" stroke="var(--brass)" stroke-width="5" fill="none" stroke-linecap="square"/></svg>`;
 function mountNav(){
+  if(document.querySelector(".nav"))return;
   const nav=h(`<div class="nav"><div class="nav-inner">
     <a class="brand" href="#/" data-nav>${KEY_GLYPH}<span>Keysmith</span></a>
     <nav class="nav-links">
