@@ -13,6 +13,8 @@ const esc=(s)=>String(s==null?"":s).replace(/[&<>"']/g,(c)=>({"&":"&amp;","<":"&
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
 const fmtInt=(n)=>Number(n).toLocaleString("en-US");
+const WALLET_LABELS={metamask:"MetaMask",bitcoin_core:"Bitcoin Core",electrum:"Electrum",blockchain:"Blockchain.com",bip39_seed:"Seed phrase"};
+const walletLabel=(id)=>WALLET_LABELS[id]||String(id||"").replace(/_/g," ");
 
 async function api(path,opts={}){
   const res=await fetch(path,opts);let body=null;
@@ -118,10 +120,10 @@ async function viewLanding(){
 
   const demoRows=(demos||[]).map((d)=>`
     <div class="demo reveal">
-      <div><div class="wt">${esc(d.wallet_type)} · test wallet</div>
+      <div><div class="wt"><span class="demo-badge">Live demo</span><span class="wt2">${esc(walletLabel(d.wallet_type))} wallet, no funds</span></div>
         <h3>${esc(d.owner_story||"A forgotten wallet")}</h3>
         <p>What they remember: ${esc(d.notes||"a few fuzzy details")}</p></div>
-      <a class="btn sm" href="#/app?demo=${esc(d.id)}" data-nav>Recover this wallet</a>
+      <a class="btn sm" href="#/app?demo=${esc(d.id)}" data-nav>Run this recovery</a>
     </div>`).join("")||`<p class="note">Demo wallets are loading on this deployment.</p>`;
 
   let proofMini;
@@ -174,33 +176,61 @@ async function viewLanding(){
 
     <section class="band" id="how"><div class="wrap">
       <div class="sec-no reveal">02 / How it works</div>
-      <h2 class="sec-h reveal">Four steps, and you can see every one.</h2>
-      <div class="steps">
-        <div class="step reveal"><div class="n">1</div><h3>Remember</h3><p>Answer a short interview about what you half recall. A model on Vultr turns it into a profile.</p></div>
-        <div class="step reveal"><div class="n">2</div><h3>Guess</h3><p>We compile the profile into a few hundred ordered guesses. You see the exact list before anything runs.</p></div>
-        <div class="step reveal"><div class="n">3</div><h3>Seal</h3><p>A fresh Vultr box opens with no network, your wallet mounted read only, and the agent locked away from it.</p></div>
-        <div class="step reveal"><div class="n">4</div><h3>Destroy</h3><p>The box tries the guesses, hands you the result, then is destroyed. A receipt proves nothing left.</p></div>
-      </div>
+      <h2 class="sec-h reveal">Four steps, and you see every one.</h2>
+      <ol class="timeline">
+        <li class="tl reveal"><div class="tl-dot"></div><div class="step-k">Step one</div>
+          <h3>Remember</h3><p>You answer a short interview about what you half recall. A model running on Vultr turns those fragments into a structured profile, never a wild guess.</p></li>
+        <li class="tl reveal"><div class="tl-dot"></div><div class="step-k">Step two</div>
+          <h3>Guess</h3><p>We compile the profile into a few hundred ordered guesses and show you the exact list first. What you approve is literally what runs, with no hidden expansion.</p></li>
+        <li class="tl reveal"><div class="tl-dot"></div><div class="step-k">Step three</div>
+          <h3>Seal</h3><p>A fresh Vultr box opens with its network switched off, your wallet mounted read only, and the reasoning agent locked away from the file entirely.</p></li>
+        <li class="tl reveal"><div class="tl-dot"></div><div class="step-k">Step four</div>
+          <h3>Destroy</h3><p>The box tries the guesses, hands you the result once, then is deleted. A teardown receipt proves the wallet left zero bytes behind.</p></li>
+      </ol>
     </div></section>
 
     <section class="band" id="try"><div class="wrap">
       <div class="sec-no reveal">03 / Try it now</div>
-      <h2 class="sec-h reveal">Open a real test wallet, start to finish.</h2>
-      <p class="sec-sub reveal">Public test vaults with no funds. You play the owner: answer the interview and watch the sealed box open it live.</p>
+      <h2 class="sec-h reveal">Run a real recovery, no wallet of your own needed.</h2>
+      <p class="sec-sub reveal">These are live demos. Each one is a real encrypted wallet we made with a password we then forgot on purpose, holding no funds. Pick one, play the owner, and watch the sealed box open it end to end.</p>
       <div class="rows">${demoRows}</div>
     </div></section>
 
     <section class="band" id="box"><div class="wrap">
-      <div class="sec-no reveal">04 / The sealed box</div>
-      <h2 class="sec-h reveal">What goes in cannot come out.</h2>
-      <p class="sec-sub reveal">Every job runs in its own Vultr machine built from a hardened image. Inside it:</p>
-      <div class="facts">
-        <div class="fact reveal"><span class="tick">✓</span><span><b>No network.</b> The cracker container runs with networking switched off and the machine blocks all outbound traffic.</span></div>
-        <div class="fact reveal"><span class="tick">✓</span><span><b>Wallet read only.</b> Your file is mounted so it can be read to test guesses, never written or copied out.</span></div>
-        <div class="fact reveal"><span class="tick">✓</span><span><b>The agent is blind to it.</b> The part that reasons about your hints has no access to the wallet file at all.</span></div>
-        <div class="fact reveal"><span class="tick">✓</span><span><b>Destroyed after.</b> Win or lose, the box is deleted and you get a teardown receipt with the egress count at zero.</span></div>
+      <div class="sec-no reveal">04 / Why you can trust it</div>
+      <h2 class="sec-h reveal">Your wallet goes into a box with no way to talk back.</h2>
+      <div class="vault-wrap">
+        <div class="vault reveal">
+          <span class="vault-tag">one sealed Vultr box, per job</span>
+          <div class="vault-io in"><span class="arr">↓</span> your wallet goes in, mounted read only</div>
+          <ul class="vault-core">
+            <li><span>Network</span><span class="g">switched off</span></li>
+            <li><span>Your wallet file</span><span class="g">read only</span></li>
+            <li><span>The reasoning agent</span><span class="g">no access</span></li>
+            <li><span>Outbound traffic</span><span class="g">all blocked</span></li>
+          </ul>
+          <div class="vault-io out"><span class="arr">↑</span> nothing comes back out</div>
+          <div class="vault-foot">then the box is destroyed · wallet bytes that left: 0</div>
+        </div>
+        <div>
+          <p class="trust-lead reveal">Recovery firms ask you to hand over your wallet and trust a stranger. Keysmith asks you to trust <b>no one</b>, including us.</p>
+          <p class="sec-sub reveal">The box is built so that even if our server were hostile, or a poisoned hint tried to make the agent misbehave, your wallet still could not leave. You do not take that on faith: during any recovery, press <b>Run the break in test</b> and watch a real exfiltration attempt get denied, live and on camera.</p>
+        </div>
       </div>
-      <p class="sec-sub reveal" style="margin-top:28px">During any recovery you can press <b>Run the break in test</b>: a poisoned hint tells the agent to read and upload your wallet, and you watch it get denied, live.</p>
+
+      <div class="sec-no reveal" style="margin-top:56px">Why this needs Vultr</div>
+      <h2 class="sec-h reveal">The trust comes from the infrastructure, not a promise.</h2>
+      <div class="vultr">
+        <div class="vrow reveal"><div class="vk">Serverless Inference</div>
+          <div><h4>Your memories never leave for a third party</h4>
+            <p>The interview that reads your hints runs on Vultr Serverless Inference, an open model on the same infrastructure. Your private details never go to OpenAI or Anthropic, the way they did in the viral case that inspired this.</p></div></div>
+        <div class="vrow reveal"><div class="vk">Cloud Compute</div>
+          <div><h4>A machine that exists only for your job</h4>
+            <p>Each recovery spins up a throwaway Vultr VM through the API, seals it, then deletes it when done. There is no shared server holding wallets, nothing persistent to breach, and a receipt that proves the teardown.</p></div></div>
+        <div class="vrow reveal"><div class="vk">Your own account</div>
+          <div><h4>Or cut us out entirely</h4>
+            <p>Because it is all Vultr and all open, you can run the exact same thing in your own Vultr account with one command. Then the wallet never touches a server we control. That option is the strongest promise we can make.</p></div></div>
+      </div>
     </div></section>
 
     <section class="band" id="proof"><div class="wrap">
