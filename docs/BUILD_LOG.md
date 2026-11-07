@@ -163,3 +163,15 @@
   connection/API errors.
   NEXT: deploy the web app on keysmith-control (RUNBOOK step 5) for a live HTTPS URL;
   record the demo video (containment moment + receipt); submit to lablab.
+
+- 2026-11-07 (session 7, UI redesign): replaced the thin emoji frontend with a full
+  landing (hero + animated key-cut visual, 01 problem w/ sources, 02 how it works,
+  03 live demo wallets, 04 sealed box facts, 05 proof, 06 run-in-your-own-account,
+  07 FAQ, closing CTA, rich footer). App moved to its own #/app route with a step
+  crumb trail. Identity: locksmith's bench, graphite + brass; Gloock/Familjen
+  Grotesk/Martian Mono; dark+light toggle; no emoji; scroll reveal. All API wiring
+  and the SSE run/containment/receipt flow kept intact. Deployed to control VM
+  (scp to /root/keysmith/web/dist, served live). Public URL https://95-179-195-57.sslip.io
+  returns 200 with the new design. Also committed the uncommitted snapshot fixes
+  (3rdIteration/btcrecover pin + gVisor tarball install) so the repo is reproducible.
+  NOT yet visually screenshotted (Chrome extension offline this session) — user to eyeball.
