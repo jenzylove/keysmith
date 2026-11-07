@@ -140,3 +140,26 @@
   retryable failed attempt (falls back to the other model) instead of crashing.
   Added scripts/run_live_job.py (one live sealed recovery) + docs/RUNBOOK.md (steps
   1-5 for a machine with SSH: snapshot, env, live job, proof, deploy).
+
+- 2026-11-07 (session 7): FULL LIVE END-TO-END RUN GREEN on real Vultr. 🎯
+  Snapshot built (22bf69e2) from keysmith-builder via scripts/snapshot/build-snapshot.sh
+  (docker+gVisor+btcrecover image, provisioned over SSH from the user's PC). Then
+  scripts/run_live_job.py on keysmith-control recovered demo-rocky end to end:
+  - interview (deepseek-v4.1-flash-1017) -> 18-candidate plan
+  - per-job VM created (aadb4a91), snapshot restore ~8 min (server_status 'locked'),
+  - sealed: nftables egress lock applied; seal = runsc / network none / wallet ro /
+    agent no wallet / vm_egress blocked,
+  - containment break-in test: BOTH held (agent 'No such file', cracker 'Network
+    unreachable'),
+  - btcrecover inside the sealed container -> found 'Rocky1999!' (logged as ****,
+    shown once in the result event, never persisted),
+  - VM destroyed (HTTP 204), containment_held=True, bytes_egressed_wallet=0.
+  No leaked VMs (only builder + control remain).
+  Bugs found & fixed live (all on main): egress lock applied at seal time; vm_id
+  assigned before boot wait (no leaks on timeout); readiness gated on SSH not
+  server_status; boot timeout 900s for snapshot restores; destroy retries through
+  409 'locked'; job files world-readable for the non-root cracker; -w /tmp writable
+  CWD; absolute path to btcrecover.py; LLM client + boot poll tolerate transient
+  connection/API errors.
+  NEXT: deploy the web app on keysmith-control (RUNBOOK step 5) for a live HTTPS URL;
+  record the demo video (containment moment + receipt); submit to lablab.
