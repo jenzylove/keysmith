@@ -470,11 +470,25 @@ async function startRun(){
     </div></div>`);
   render(node);renderStages(node,null);
   try{await api(`/api/jobs/${j.id}/start`,{method:"POST"});}catch(e){return errorScreen(e.message);}
-  const es=new EventSource(`/api/jobs/${j.id}/events`);
+  const url=`/api/jobs/${j.id}/events`;
+  let streamLive=true;
+  const es=new EventSource(url);
   const logEl=$("#log",node),attackBtn=$("#attack-btn",node);
-  attackBtn.onclick=async()=>{attackBtn.disabled=true;try{await api(`/api/jobs/${j.id}/attack`,{method:"POST"});}catch(e){toast(e.message);attackBtn.disabled=false;}};
-  es.onmessage=(msg)=>{let ev;try{ev=JSON.parse(msg.data);}catch(_){return;}handleEvent(node,ev,{logEl,attackBtn,j});if(ev.type==="receipt")es.close();};
-  es.onerror=()=>{};
+  attackBtn.onclick=async()=>{
+    attackBtn.disabled=true;
+    // The run's stream closes once the recovery finishes, so re-open one here so
+    // a break in test run after the result still shows its blocked attempts live.
+    let aes=null;
+    if(!streamLive){
+      aes=new EventSource(url);
+      aes.onmessage=(msg)=>{let ev;try{ev=JSON.parse(msg.data);}catch(_){return;}handleEvent(node,ev,{logEl,attackBtn,j});};
+    }
+    try{await api(`/api/jobs/${j.id}/attack`,{method:"POST"});}
+    catch(e){toast(e.message);attackBtn.disabled=false;}
+    if(aes)setTimeout(()=>aes.close(),20000);
+  };
+  es.onmessage=(msg)=>{let ev;try{ev=JSON.parse(msg.data);}catch(_){return;}handleEvent(node,ev,{logEl,attackBtn,j});if(ev.type==="receipt"){streamLive=false;es.close();}};
+  es.onerror=()=>{if(es.readyState===2)streamLive=false;};
 }
 function renderStages(node,current){
   const el=$("#stages",node);
