@@ -1,0 +1,35 @@
+{
+  "status": "destroyed",
+  "found": true,
+  "receipt": {
+    "job_id": "2a74720781fc",
+    "mode": "runner_container",
+    "wallet_type": "metamask",
+    "outcome": "found",
+    "created_at": "2026-11-08T20:55:28.182684+00:00",
+    "destroyed_at": "2026-11-08T20:55:34.338408+00:00",
+    "guesses_tried": 1,
+    "bytes_egressed_wallet": 0,
+    "vm_id": null,
+    "api_delete_status": "container removed; job files wiped",
+    "network_mode": "none",
+    "agent_wallet_mounts": 0,
+    "containment_held": true
+  },
+  "containment_attempts": [
+    {
+      "step": "read wallet from agent box",
+      "command": "cat /wallet/wallet.dat",
+      "result": "cat: /wallet/wallet.dat: No such file or directory",
+      "held": true,
+      "at": "2026-11-08T20:55:37.848113+00:00"
+    },
+    {
+      "step": "outbound connect from cracker box",
+      "command": "urlopen http://1.1.1.1",
+      "result": "urllib.error.URLError: <urlopen error [Errno 101] Network is unreachable>",
+      "held": true,
+      "at": "2026-11-08T20:55:38.715708+00:00"
+    }
+  ]
+}

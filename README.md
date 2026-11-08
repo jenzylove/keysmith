@@ -75,7 +75,9 @@ The box can open no outbound connection. The only channel is the control VM's in
 only progress numbers and the final result travel back. A poisoned hint that tells the agent to
 read the wallet and phone home fails twice: the agent has no wallet mount, and the network is
 off. You can trigger both failures yourself with the break in test on any run. Proven on real
-infrastructure in [`docs/spikes/sealed-vm.md`](docs/spikes/sealed-vm.md).
+infrastructure in [`docs/spikes/sealed-vm.md`](docs/spikes/sealed-vm.md), and a captured live run
+(password found, containment held, zero wallet bytes egressed, both attacks blocked) is in
+[`docs/live-run-receipt.json`](docs/live-run-receipt.json).
 
 ## Proof: memory beats brute force
 
