@@ -1,5 +1,10 @@
 # Keysmith
 
+[![live demo](https://img.shields.io/badge/live%20demo-95--179--195--57.sslip.io-0B8457)](https://95-179-195-57.sslip.io) [![built on Vultr](https://img.shields.io/badge/built%20on-Vultr-007BFC)](https://www.vultr.com) [![license MIT](https://img.shields.io/badge/license-MIT-16130E)](LICENSE) [![tests](https://img.shields.io/badge/tests-71%20passing-0B8457)](tests)
+
+![Keysmith](docs/hero.png)
+
+
 **Forgot the password to an old crypto wallet? Tell Keysmith what you half remember.
 It turns your memories into a short list of targeted guesses and tries them inside a
 sealed Vultr box that cannot send your wallet anywhere, not even to us.**
