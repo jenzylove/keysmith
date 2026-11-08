@@ -470,25 +470,24 @@ async function startRun(){
     </div></div>`);
   render(node);renderStages(node,null);
   try{await api(`/api/jobs/${j.id}/start`,{method:"POST"});}catch(e){return errorScreen(e.message);}
-  const url=`/api/jobs/${j.id}/events`;
-  let streamLive=true;
-  const es=new EventSource(url);
+  const es=new EventSource(`/api/jobs/${j.id}/events`);
   const logEl=$("#log",node),attackBtn=$("#attack-btn",node);
+  // The break in test is rendered by polling the job state, so it works whether
+  // it is run during the recovery or after it finishes (the live stream closes
+  // on the receipt, so it cannot be relied on for a post run test).
   attackBtn.onclick=async()=>{
     attackBtn.disabled=true;
-    // The run's stream closes once the recovery finishes, so re-open one here so
-    // a break in test run after the result still shows its blocked attempts live.
-    let aes=null;
-    if(!streamLive){
-      aes=new EventSource(url);
-      aes.onmessage=(msg)=>{let ev;try{ev=JSON.parse(msg.data);}catch(_){return;}handleEvent(node,ev,{logEl,attackBtn,j});};
-    }
     try{await api(`/api/jobs/${j.id}/attack`,{method:"POST"});}
-    catch(e){toast(e.message);attackBtn.disabled=false;}
-    if(aes)setTimeout(()=>aes.close(),20000);
+    catch(e){toast(e.message);attackBtn.disabled=false;return;}
+    for(let i=0;i<40;i++){
+      let jd;try{jd=await api(`/api/jobs/${j.id}`);}catch(_){break;}
+      renderAttacks(node,jd.attacks);
+      if((jd.attacks||[]).length>=2)break;
+      await new Promise((r)=>setTimeout(r,800));
+    }
   };
-  es.onmessage=(msg)=>{let ev;try{ev=JSON.parse(msg.data);}catch(_){return;}handleEvent(node,ev,{logEl,attackBtn,j});if(ev.type==="receipt"){streamLive=false;es.close();}};
-  es.onerror=()=>{if(es.readyState===2)streamLive=false;};
+  es.onmessage=(msg)=>{let ev;try{ev=JSON.parse(msg.data);}catch(_){return;}handleEvent(node,ev,{logEl,attackBtn,j});if(ev.type==="receipt")es.close();};
+  es.onerror=()=>{};
 }
 function renderStages(node,current){
   const el=$("#stages",node);
@@ -509,14 +508,18 @@ function handleEvent(node,ev,ctx){
     case"progress":{const pct=ev.total?Math.min(100,Math.round((ev.tried/ev.total)*100)):0;
       $("#bar",node).style.width=pct+"%";$("#pmeta",node).textContent=`${fmtInt(ev.tried)} / ${fmtInt(ev.total)} guesses · ${fmtInt(ev.rate)} /sec`;break;}
     case"log":logEl.textContent+=ev.line+"\n";logEl.scrollTop=logEl.scrollHeight;break;
-    case"attack":$("#attacks",node).appendChild(h(`<div class="attack-item">
-      <div><b>${esc(ev.step)}</b> <span class="badge ${ev.held?"ok":"no"}">${ev.held?"blocked":"GOT THROUGH"}</span></div>
-      <div class="cmd">$ ${esc(ev.command)}</div><div class="res">→ ${esc(ev.result)}</div></div>`));break;
+    case"attack":break; /* attacks are rendered by polling job state, see renderAttacks */
     case"result":showResult(node,ev);break;
     case"receipt":showReceipt(node,ev.receipt);break;
     case"error":{const p=$("#result-panel",node);p.style.display="block";p.className="panel error-box";
       p.innerHTML=`<h2>Couldn't finish</h2><p class="sub">${esc(ev.message)}</p>`;break;}
   }
+}
+function renderAttacks(node,list){
+  const c=$("#attacks",node);if(!c)return;c.innerHTML="";
+  (list||[]).forEach((ev)=>c.appendChild(h(`<div class="attack-item">
+    <div><b>${esc(ev.step)}</b> <span class="badge ${ev.held?"ok":"no"}">${ev.held?"blocked":"GOT THROUGH"}</span></div>
+    <div class="cmd">$ ${esc(ev.command)}</div><div class="res">→ ${esc(ev.result)}</div></div>`)));
 }
 function showResult(node,ev){
   const panel=$("#result-panel",node);panel.style.display="block";panel.className="panel";
