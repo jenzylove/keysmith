@@ -101,9 +101,8 @@ function animateKey(node,guesses){
 /* ---------- footer status ---------- */
 function statusStrip(health){
   const live=health&&health.runner==="vm";
-  const model=health&&health.model?health.model:"inference not configured";
   return `<div class="statusline"><span class="dot ${live?"live":""}"></span>
-    ${live?"Sealed box runner online":"Runner not configured (demo build)"} · model ${esc(model)}</div>`;
+    ${live?"Sealed box online, ready to recover":"Starting up, one moment"}</div>`;
 }
 
 /* ================= LANDING ================= */

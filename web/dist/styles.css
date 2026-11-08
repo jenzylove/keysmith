@@ -250,3 +250,21 @@ table.proof td{padding:13px 12px;border-top:1px solid var(--line2);color:var(--m
 /* toast */
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:var(--bg);
   font-size:14px;font-weight:600;padding:11px 19px;border-radius:999px;z-index:80;box-shadow:var(--shadow)}
+
+/* mobile: prevent any horizontal overflow and scale the hero down */
+html,body{overflow-x:hidden;max-width:100%}
+@media(max-width:620px){
+  .wrap{padding:0 18px}
+  .hero{min-height:auto;padding:116px 0 46px}
+  .hero h1{font-size:clamp(32px,10vw,48px);max-width:11ch}
+  .eyebrow{font-size:10.5px;letter-spacing:.1em;max-width:100%;text-align:center}
+  .lede{font-size:16px;max-width:36ch}
+  .statusline{max-width:100%;text-align:center;flex-wrap:wrap;justify-content:center}
+  .keystage{width:88%}
+  .sec-h{font-size:clamp(26px,8vw,40px)}
+  .closing h2{font-size:clamp(28px,9vw,48px)}
+  .foot-mark{font-size:clamp(56px,22vw,120px)}
+  .nav-inner{gap:10px;padding:7px 8px 7px 14px}
+  .stat-row{gap:28px}
+  .proofbar{gap:30px}
+}
