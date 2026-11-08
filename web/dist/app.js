@@ -455,18 +455,25 @@ const STAGE_LABEL={queued:"queued",creating_box:"creating box",sealing:"sealing"
 async function startRun(){
   const j=state.job;
   const node=h(`<div class="appwrap">${crumbs("run")}
-    <div class="row-between"><h2>Live recovery</h2><span class="note" id="box-label">opening the box…</span></div>
+    <div class="row-between"><h2>Opening the sealed box</h2><span class="note" id="box-label">creating the box…</span></div>
     <div class="stages" id="stages"></div>
-    <div class="run-grid">
-      <div><div class="panel"><h2>Progress</h2>
-        <div class="bar"><i id="bar"></i></div><div class="progress-meta" id="pmeta">waiting…</div>
-        <div class="spacer"></div><div class="log" id="log"></div></div>
-        <div id="result-panel" style="display:none"></div></div>
-      <div><div class="panel"><h2>Containment</h2>
-        <ul class="seal" id="seal"><li><span>waiting for seal…</span></li></ul>
-        <div class="spacer"></div><button class="btn danger" id="attack-btn" disabled>Run the break in test</button>
-        <div id="attacks" style="margin-top:12px"></div></div>
-        <div id="receipt-panel" style="display:none"></div></div>
+    <div class="panel" id="live-panel">
+      <ul class="seal" id="seal"><li><span>waiting for the box to seal…</span></li></ul>
+      <div class="spacer"></div>
+      <div class="bar"><i id="bar"></i></div><div class="progress-meta" id="pmeta">waiting…</div>
+      <details class="raw" style="margin-top:12px"><summary>See the raw log</summary><div class="log" id="log"></div></details>
+    </div>
+    <div id="result-panel" style="display:none"></div>
+    <div class="panel breakin" id="breakin-panel" style="display:none">
+      <h2>Is the box really sealed?</h2>
+      <p class="sub">Do not take our word for it. Make the box try to steal this wallet right now, two ways an attacker would, and watch both fail.</p>
+      <button class="btn danger" id="attack-btn">Make the box try to steal the wallet</button>
+      <div id="attacks" style="margin-top:16px"></div>
+    </div>
+    <details class="raw" id="receipt-wrap" style="display:none;margin-top:18px"><summary>See the teardown receipt</summary><div id="receipt-panel"></div></details>
+    <div class="cta-row" id="end-cta" style="display:none;margin-top:30px">
+      <a class="btn" href="#/app" data-nav>Recover another wallet</a>
+      <a class="btn secondary" href="#/" data-nav>Back to home</a>
     </div></div>`);
   render(node);renderStages(node,null);
   try{await api(`/api/jobs/${j.id}/start`,{method:"POST"});}catch(e){return errorScreen(e.message);}
@@ -476,9 +483,9 @@ async function startRun(){
   // it is run during the recovery or after it finishes (the live stream closes
   // on the receipt, so it cannot be relied on for a post run test).
   attackBtn.onclick=async()=>{
-    attackBtn.disabled=true;
+    attackBtn.disabled=true;attackBtn.textContent="Trying to break out…";
     try{await api(`/api/jobs/${j.id}/attack`,{method:"POST"});}
-    catch(e){toast(e.message);attackBtn.disabled=false;return;}
+    catch(e){toast(e.message);attackBtn.disabled=false;attackBtn.textContent="Make the box try to steal the wallet";return;}
     for(let i=0;i<40;i++){
       let jd;try{jd=await api(`/api/jobs/${j.id}`);}catch(_){break;}
       renderAttacks(node,jd.attacks);
@@ -489,6 +496,7 @@ async function startRun(){
   es.onmessage=(msg)=>{let ev;try{ev=JSON.parse(msg.data);}catch(_){return;}handleEvent(node,ev,{logEl,attackBtn,j});if(ev.type==="receipt")es.close();};
   es.onerror=()=>{};
 }
+function revealEnd(node){const e=$("#end-cta",node);if(e)e.style.display="flex";const b=$("#breakin-panel",node);if(b)b.style.display="block";}
 function renderStages(node,current){
   const el=$("#stages",node);
   const idx=current?STAGE_ORDER.indexOf(current==="not_found"?"found":current):-1;
@@ -504,24 +512,32 @@ function handleEvent(node,ev,ctx){
     case"seal":{const ok=(v)=>/none|read only|blocked|runsc/i.test(v);
       $("#seal",node).innerHTML=(ev.checks||[]).map((c)=>`<li><span>${esc(c.name.replace(/_/g," "))}</span>
         <span class="v">${esc(c.value)} <span class="badge ${ok(c.value)?"ok":"no"}">${ok(c.value)?"held":"check"}</span></span></li>`).join("");
-      attackBtn.disabled=false;break;}
+      break;}
     case"progress":{const pct=ev.total?Math.min(100,Math.round((ev.tried/ev.total)*100)):0;
       $("#bar",node).style.width=pct+"%";$("#pmeta",node).textContent=`${fmtInt(ev.tried)} / ${fmtInt(ev.total)} guesses · ${fmtInt(ev.rate)} /sec`;break;}
     case"log":logEl.textContent+=ev.line+"\n";logEl.scrollTop=logEl.scrollHeight;break;
     case"attack":break; /* attacks are rendered by polling job state, see renderAttacks */
-    case"result":showResult(node,ev);break;
-    case"receipt":showReceipt(node,ev.receipt);break;
+    case"result":showResult(node,ev);revealEnd(node);break;
+    case"receipt":showReceipt(node,ev.receipt);{const w=$("#receipt-wrap",node);if(w)w.style.display="block";}break;
     case"error":{const p=$("#result-panel",node);p.style.display="block";p.className="panel error-box";
       p.innerHTML=`<h2>Couldn't finish</h2><p class="sub">${esc(ev.message)}</p>`;break;}
   }
 }
 function renderAttacks(node,list){
   const c=$("#attacks",node);if(!c)return;c.innerHTML="";
-  (list||[]).forEach((ev)=>c.appendChild(h(`<div class="attack-item">
-    <div><b>${esc(ev.step)}</b> <span class="badge ${ev.held?"ok":"no"}">${ev.held?"blocked":"GOT THROUGH"}</span></div>
-    <div class="cmd">$ ${esc(ev.command)}</div><div class="res">→ ${esc(ev.result)}</div></div>`)));
+  const label=(ev)=>{const s=(ev.step||"").toLowerCase();
+    if(s.includes("read"))return{t:"It tried to read your wallet file",why:"Blocked: the agent has no access to the wallet at all."};
+    if(s.includes("outbound")||s.includes("connect"))return{t:"It tried to send your wallet out",why:"Blocked: the box has no network, so nothing can leave."};
+    return{t:ev.step,why:ev.held?"Blocked.":"Got through."};};
+  (list||[]).forEach((ev)=>{const L=label(ev);c.appendChild(h(`<div class="attack-item">
+    <div class="row-between"><b>${esc(L.t)}</b> <span class="badge ${ev.held?"ok":"no"}">${ev.held?"blocked":"got through"}</span></div>
+    <div class="res" style="color:var(--mut)">${esc(L.why)}</div>
+    <details class="raw" style="margin-top:6px"><summary>see the command</summary><div class="cmd">$ ${esc(ev.command)}</div><div class="res">→ ${esc(ev.result)}</div></details></div>`));});
+  if((list||[]).length>=2){const b=$("#attack-btn",node);if(b){b.disabled=true;b.className="btn secondary";b.textContent="Both attempts blocked. The wallet never left the box.";}}
 }
 function showResult(node,ev){
+  const bar=$("#bar",node);if(bar)bar.style.width="100%";
+  const pm=$("#pmeta",node);if(pm)pm.textContent=ev.found?"password recovered":"search finished, no match in this plan";
   const panel=$("#result-panel",node);panel.style.display="block";panel.className="panel";
   if(ev.found){
     const isSeed=state.job&&state.job.wallet_type==="bip39_seed";

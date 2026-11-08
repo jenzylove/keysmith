@@ -268,3 +268,8 @@ html,body{overflow-x:hidden;max-width:100%}
   .stat-row{gap:28px}
   .proofbar{gap:30px}
 }
+
+/* break in test: its own prove-it block on the run page */
+.panel.breakin{border:1px solid var(--line);border-left:3px solid var(--no);border-radius:14px;padding:26px 24px;background:var(--raise)}
+.panel.breakin h2{margin-bottom:8px}
+#result-panel .reveal-pw{font-size:32px}
