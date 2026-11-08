@@ -143,7 +143,7 @@ async function viewLanding(){
     <section class="hero"><div class="wrap hero-center">
       <div class="eyebrow">Vultr Agent Rush · sealed recovery</div>
       <h1>Your old wallet is <span class="pill-word">still</span> there.</h1>
-      <p class="lede">Tell Keysmith what you half remember, a name, a year, the way you swap letters for numbers. It becomes a short list of targeted guesses, tried inside a sealed box that cannot send your wallet anywhere, not even to us.</p>
+      <p class="lede">You still have the wallet, you just forgot the password that opens it. Tell Keysmith what you half remember, and it tries a short list of targeted guesses inside a sealed box that cannot send your wallet anywhere, not even to us.</p>
       <div class="cta-row center">
         <a class="btn" href="#/app" data-nav>Start a recovery</a>
         <a class="btn secondary" href="#/app?demo=1" data-nav>Watch a demo wallet open</a>
@@ -252,7 +252,7 @@ async function viewLanding(){
       <h2 class="sec-h reveal" style="margin-bottom:24px">Straight answers.</h2>
       <details class="faq reveal"><summary>Do you ever see my wallet?</summary><p>No. For a hosted job the file goes straight into the sealed box over an inbound only channel and is never written to our database. For full certainty, run it in your own Vultr account.</p></details>
       <details class="faq reveal"><summary>What if my password was random?</summary><p>Then Keysmith will not find it, and it tells you so before you spend time. It works when your password came from things you can still half remember.</p></details>
-      <details class="faq reveal"><summary>Which wallets work?</summary><p>MetaMask, Bitcoin Core, Electrum, Blockchain.com, and BIP39 seed phrases with a couple of missing words.</p></details>
+      <details class="faq reveal"><summary>Which wallets work?</summary><p>Any wallet you still have the file for but cannot open: MetaMask, Bitcoin Core (wallet.dat), Electrum, and Blockchain.com backups. Keysmith recovers the password that decrypts the file. It does not recover a lost seed phrase.</p></details>
       <details class="faq reveal"><summary>What does it cost?</summary><p>Free during the hackathon. The honest model is a small flat fee per job, never a percentage of your coins.</p></details>
       <details class="faq reveal"><summary>Could someone run this on a wallet that is not theirs?</summary><p>We cannot verify ownership, and we say so plainly. Keysmith adds no new capability: the underlying open tool already exists. We never store files and we keep no copy.</p></details>
       <details class="faq reveal"><summary>Why Vultr?</summary><p>The work needs a throwaway machine you can seal and destroy on demand, and a model that runs on the same infrastructure so your memories never leave for a third party. Vultr gives both.</p></details>
@@ -319,7 +319,7 @@ async function viewStart(demoFlag){
   const node=h(`<div class="appwrap">
     ${crumbs("type")}
     <div class="panel"><h2>Recover your own wallet</h2>
-      <p class="sub">Pick your wallet type. For a wallet, Keysmith finds the <b>password</b> that unlocks it on your device, not your seed phrase. Lost a word of your seed phrase instead? That is the last option.</p>
+      <p class="sub">Pick the wallet you still have but cannot open. Keysmith finds the <b>password</b> that decrypts its file on your device, the one you forgot. This is not your seed phrase, it is the password that unlocks the wallet.</p>
       <div class="rows">${typeRows}</div></div>
     <div class="panel" id="demo-panel"><h2>Or try a live demo</h2>
       <p class="sub">No wallet of your own? These are real test wallets with no funds. Play the owner, answer the interview, and watch the sealed box open one end to end.</p>

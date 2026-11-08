@@ -55,8 +55,6 @@ WALLET_TYPES = [
      "The password that unlocks an Electrum wallet file."),
     ("blockchain", "Blockchain.com password", "file", "blockchain_v3",
      "The password for a Blockchain.com wallet backup (the wallet.aes.json file)."),
-    ("bip39_seed", "Lost a word in your seed phrase", "seed", "bip39_seed",
-     "The only option that recovers a phrase, not a password. Missing a word or two of your 12 or 24 word seed? We find them from one known address."),
 ]
 WALLET_IDS = {w[0] for w in WALLET_TYPES}
 WALLET_ESTIMATOR_KEY = {w[0]: w[3] for w in WALLET_TYPES}
