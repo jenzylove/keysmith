@@ -175,3 +175,13 @@
   returns 200 with the new design. Also committed the uncommitted snapshot fixes
   (3rdIteration/btcrecover pin + gVisor tarball install) so the repo is reproducible.
   NOT yet visually screenshotted (Chrome extension offline this session) — user to eyeball.
+
+- 2026-11-08 (session 7, submission assets): full headless self-review (desktop + true
+  390px mobile via CDP, no overflow). Removed model id from hero. Fixed a real bug: the
+  break in test now works after the run (rendered by polling job state, fills in ~2s;
+  the SSE stream closes on the receipt). README rewritten (live one-minute judge path,
+  warm runner, Vultr services, proof, limits), MIT LICENSE, repo made PUBLIC with
+  description/homepage/topics. Demo video keysmith-launch/video/keysmith-demo.mp4 (66s,
+  1080p, captions + VO, shows the containment moment). Cover keysmith-launch/cover.png.
+  Slides keysmith-launch/keysmith-slides.pdf. Paste-ready form text keysmith-launch/SUBMISSION.md.
+  Remaining: user submits the lablab form before Nov 8 22:00 UTC.
