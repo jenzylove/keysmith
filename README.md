@@ -1,71 +1,106 @@
 # Keysmith
 
-**Forgot the password to an old crypto wallet? Tell Keysmith what you half-remember.
-It turns your memories into targeted guesses and tries them inside a sealed Vultr box
-that cannot send your wallet anywhere — not even to us.**
+**Forgot the password to an old crypto wallet? Tell Keysmith what you half remember.
+It turns your memories into a short list of targeted guesses and tries them inside a
+sealed Vultr box that cannot send your wallet anywhere, not even to us.**
 
-Lost crypto doesn't have a cracking problem. It has a *trust* problem: the only people
-who can help you are the people you'd least want holding your wallet file. Keysmith
-removes the trust: a fresh per-job box with no network, your wallet mounted read-only,
-destroyed after the run, with a teardown receipt that proves it.
+Lost crypto does not have a cracking problem. It has a trust problem: the only people
+who can help you are the people you would least want holding your wallet file. Keysmith
+removes the trust. Every recovery runs in a sealed box with no network, your wallet
+mounted read only, the reasoning agent locked away from the file, and the box destroyed
+afterwards with a receipt that proves nothing left.
 
-Built for the Vultr Agent Rush hackathon (Challenge 1, "Blast Radius Zero").
+Built for the Vultr Agent Rush hackathon, Challenge 1, Blast Radius Zero.
 
-## Live demo
+## Try it in one minute (no keys, no setup)
 
-**https://95-179-195-57.sslip.io** — the real app on a Vultr control VM. Click
-*Watch a demo wallet open*; a fresh sealed Vultr VM is created per job (allow
-~8 min for the snapshot restore), the containment break-in test is blocked on
-screen, the password is recovered, and the VM is destroyed with a teardown
-receipt. Verified end to end on real infrastructure (see `docs/BUILD_LOG.md`,
-2026-11-07).
+Open **https://95-179-195-57.sslip.io** and click **Watch a demo wallet open**.
 
-## Judge fast path (offline, no keys)
+A real encrypted test wallet (no funds) opens end to end in front of you:
+1. A model on Vultr Serverless Inference turns the owner's fuzzy memories into guesses.
+2. A sealed box opens on Vultr, the containment checks go green.
+3. btcrecover tries the guesses and the password appears.
+4. Press **Run the break in test**: a poisoned hint tries to read and upload the wallet, and you watch it get denied, live.
+5. The box is destroyed and a teardown receipt shows zero wallet bytes left.
 
-```bash
-pip install -r requirements.txt
-python scripts/devserver.py          # http://127.0.0.1:8000  (scripted demo, no Vultr)
+The whole run takes a few seconds. Bring your own wallet instead with **Start a recovery**.
+
+## What is real, and what is not
+
+| Part | Status |
+|---|---|
+| Recovery logic (hint schema, rule compiler, estimator, receipt) | Real. Pure, deterministic, 71 tests. |
+| Interview writes the guess profile | Real. Vultr Serverless Inference, `src/keysmith/llm.py`. |
+| Sealed box runs the guesses | Real. gVisor container, no network, wallet read only, on a Vultr VM. |
+| Containment (no network, wallet read only, agent has no access, host egress blocked) | Real. Observed live on the run page and in the break in test, not asserted. |
+| Proof: our rules vs plain defaults | Real. 20 test wallets, hints written blind before any run. 10 of 20 recovered, 0 of 20 by defaults, misses published. |
+| Found password / wallet bytes | Never stored. Shown once from the live stream, then gone. |
+| Payments | Not built for the hackathon. Pricing is stated, not charged. |
+
+## How the sealed box works
+
+```
+your wallet ──inbound SSH──> sealed Vultr box
+                              nftables: output + forward + input(drop, SSH only)
+                              cracker container: runsc, --network=none, wallet :ro
+                              agent container:   runsc, --network=none, NO wallet
+                              <── progress only ──  (the wallet can never leave)
+                              then: container removed, job files wiped
 ```
 
-Open it, click **Watch a demo wallet open**, answer the short interview, accept the
-plan, and watch the box open a real test vault — then hit **Run the break-in test** to
-see a poisoned hint's attempt to read and upload the wallet get denied, live. The
-dev server scripts the box so you can see the whole UX without Vultr; the production
-path is the same code with the real runner (below).
-
-## What's real
-
-- **Core recovery logic** (`src/keysmith/`): hint schema, deterministic rule compiler
-  (exact, ordered, capped candidate list), honest estimator, teardown receipt. 71 tests.
-- **Sealed-VM runner** (`src/keysmith/runner.py`): creates a Vultr VM from a prebuilt
-  snapshot, verifies containment, pushes the wallet + candidate list over inbound SSH,
-  runs btcrecover under gVisor `--network=none`, streams progress, destroys the VM.
-  Ships as `NullRunner` until the five Vultr env vars are set — it never fakes a run.
-  **Proven live end to end on Vultr (2026-11-07): sealed box, containment held,
-  password recovered, VM destroyed, zero wallet bytes egressed.**
-- **Containment**, proven in the S3 spike and shown on the run page: output **and**
-  forward nftables chains drop, `runsc` runtime, wallet `:ro`, agent box has no wallet.
-- **Demo + proof**: real test vaults (no funds), and a 20-case answer key written blind
-  (`data/proof/cases.json`) — 15 derivable, 5 honest misses, published with the fix.
+The box can open no outbound connection. The only channel is the control VM's inbound
+SSH, and only progress numbers and the final result travel back. A poisoned hint that
+tells the agent to read the wallet and phone home fails twice: the agent has no wallet
+mount, and the network is off. Both failures are shown on camera.
 
 ## Vultr services used
 
 | Service | Where |
 |---|---|
-| Serverless Inference (`api.vultrinference.com`) | every model call — the interview writes the hint profile. One client module: `src/keysmith/llm.py`. |
-| Cloud Compute | the control VM, and one sealed job VM per recovery. |
-| Vultr API (`api.vultr.com/v2`) | create / poll / snapshot / destroy job VMs. |
+| Serverless Inference (`api.vultrinference.com`) | Every model call. The interview turns memories into a hint profile. One client: `src/keysmith/llm.py`, model `deepseek-v4.1-flash-1017`. |
+| Cloud Compute | The control VM that serves the app, and the sealed runner VM that runs recoveries. |
+| Vultr API (`api.vultr.com/v2`) | Builds the hardened snapshot image, and (in per job mode) creates and destroys a fresh VM per recovery. |
 
 ## Architecture
 
-See `docs/ARCHITECTURE.md` for routes, SSE events, the runner protocol and data dirs;
-`docs/PRD.md` for the product; `scripts/snapshot/` for the job-VM image; `deploy/` for
-the control-VM Caddy + systemd setup.
+One **control VM** serves the web app and API. A **warm sealed runner VM** stays booted
+with Docker, gVisor and the btcrecover image baked in. Each recovery runs as a fresh
+gVisor container on it, so a run starts in seconds instead of waiting on a VM boot. The
+host egress lock and per container `--network=none` make the box unable to talk out; the
+container and the job's files are wiped after each run. A per job VM mode (a fresh Vultr
+VM created and destroyed for every job, from a snapshot) ships in the same code for teams
+that want one throwaway machine per recovery; it is slower but never reuses a host.
 
-## Honest limits
+See `docs/ARCHITECTURE.md` for the full contract and `docs/BUILD_LOG.md` for the spikes
+that proved containment and speed on real infrastructure.
 
-- Won't crack strong random passwords, or seeds missing more than ~2 words. It says so
-  before the run.
-- Stores no wallet files, passwords, or hints after a job.
-- Has **no way to verify wallet ownership** — only run it on wallets you own. Stated
-  plainly before every upload.
+## The number that matters
+
+Recovery firms take around 20 percent of the coins and need your wallet file in their
+hands. Keysmith is a flat fee per job and never holds your file. On a 5 BTC wallet, that
+is the difference between keeping your coins and handing over about one of them.
+
+## Run it in your own Vultr account
+
+The whole thing is open. Point it at your own Vultr account and the wallet never touches
+a server anyone else controls.
+
+```bash
+git clone https://github.com/jenzylove/keysmith && cd keysmith
+pip install -r requirements.txt
+# set VULTR_API_KEY, VULTR_INFERENCE_KEY, and either warm-runner or snapshot env vars
+python -m keysmith          # serves on :8000
+```
+
+Running locally with no Vultr keys, the app serves a scripted demo of the full flow
+(`scripts/devserver.py`) so the experience is visible without an account. It never fakes
+a real recovery: the live runner ships as a `NullRunner` until the Vultr env vars are set.
+
+## Scope and limits
+
+- Works when your password came from things you can still half remember. It will not
+  crack a strong random password, and it says so before you spend time.
+- The seed phrase option recovers up to two missing or wrong words from a known address,
+  not an entirely lost phrase.
+- It cannot verify wallet ownership. The policy is stated plainly, it stores nothing,
+  and it adds no capability the underlying open tool does not already have.
